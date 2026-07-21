@@ -161,16 +161,18 @@
     }
     .steps { display: grid; gap: 12px; padding: 16px 16px max(30px, env(safe-area-inset-bottom)); }
     .step-card {
-      min-height: 178px;
-      padding: 18px;
       scroll-snap-align: start;
       scroll-margin-top: 112px;
       border: 1px solid var(--line);
       border-radius: 22px;
       background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.027));
       box-shadow: 0 18px 34px rgba(0,0,0,.16);
+      overflow: hidden;
     }
-    .step-top { display: grid; grid-template-columns: 38px 1fr; gap: 13px; align-items: start; }
+    .step-summary, .measure-summary { list-style: none; cursor: pointer; }
+    .step-summary::-webkit-details-marker, .measure-summary::-webkit-details-marker { display: none; }
+    .step-summary { min-height: 178px; padding: 18px; }
+    .step-top { display: grid; grid-template-columns: 38px 1fr 24px; gap: 13px; align-items: start; }
     .step-number {
       width: 38px;
       height: 38px;
@@ -184,6 +186,8 @@
       font-weight: 800;
     }
     .step-card h3 { margin: 1px 0 0; font-size: 17px; line-height: 1.28; letter-spacing: -.01em; }
+    .chevron { color: var(--muted); font-size: 20px; line-height: 38px; text-align: center; transition: transform .2s ease; }
+    .step-card[open] > .step-summary .step-chevron { transform: rotate(180deg); }
     .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 22px; }
     .metric { min-width: 0; padding: 10px 5px 9px; border-radius: 12px; background: rgba(0,0,0,.2); text-align: center; }
     .metric strong { display: block; margin-bottom: 5px; font-size: 19px; font-variant-numeric: tabular-nums; }
@@ -192,6 +196,15 @@
     .metric-done strong { color: var(--green); }
     .metric-blocked strong { color: var(--red); }
     .metric-overdue strong { color: var(--orange); }
+    .step-content { padding: 0 18px 18px; }
+    .measure-accordion { border-top: 1px solid var(--line); }
+    .measure-summary { display: grid; grid-template-columns: 1fr auto 24px; align-items: center; gap: 9px; padding: 17px 0 0; font-size: 13px; font-weight: 750; }
+    .measure-count { padding: 4px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .measure-accordion[open] .measure-chevron { transform: rotate(180deg); }
+    .measure-list { margin: 15px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
+    .measure-item { display: grid; grid-template-columns: 54px 1fr; gap: 10px; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
+    .measure-item + .measure-item { border-top: 1px solid var(--line); }
+    .measure-number { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
 
     .questions { justify-content: center; }
     .questions-inner { width: 100%; }
@@ -281,6 +294,123 @@
         { id: 10, name: "Archivierung & Lessons Learned", ranges: [] }
       ];
 
+      const measuresByStep = {
+        1: [
+          ["1.1", "Abschlussprojekt anlegen"],
+          ["1.2", "Rollen und Verantwortlichkeiten definieren"],
+          ["1.3", "Abschlusskalender erstellen"],
+          ["1.4", "Vorjahresabschluss übernehmen"],
+          ["1.5", "Prüfungsumfang klären"],
+          ["1.6", "Kick-off mit Prüfer vorbereiten"]
+        ],
+        2: [
+          ["2.1", "SuSa / Hauptbuch hochladen"],
+          ["2.2", "Vorjahreswerte importieren"],
+          ["2.3", "Kontenmapping durchführen"],
+          ["2.4", "Mapping prüfen und bestätigen"],
+          ["2.5", "Bilanz- und GuV-Struktur erzeugen"],
+          ["2.6", "Summenlogik prüfen"],
+          ["2.7", "Erste Plausibilitätsanalyse durchführen"]
+        ],
+        3: [
+          ["3.1", "Bankkonten abstimmen"],
+          ["3.2", "Debitoren abstimmen"],
+          ["3.3", "Kreditoren abstimmen"],
+          ["3.4", "Anlagenbuchhaltung abstimmen"],
+          ["3.5", "Vorräte abstimmen"],
+          ["3.6", "Rückstellungen ermitteln"],
+          ["3.7", "Rechnungsabgrenzung prüfen"],
+          ["3.8", "Darlehen und Finanzverbindlichkeiten abstimmen"],
+          ["3.9", "Eigenkapital prüfen"],
+          ["3.10", "Steuerberechnung durchführen"],
+          ["3.11", "Lohn- und Gehaltskonten abstimmen"],
+          ["3.12", "Intercompany-Abstimmung durchführen"],
+          ["3.13", "Abschlussbuchungen erfassen"],
+          ["3.14", "Finalisierte SuSa erzeugen"]
+        ],
+        4: [
+          ["4.1", "Bilanzanalyse durchführen"],
+          ["4.2", "GuV-Analyse durchführen"],
+          ["4.3", "Konten mit ungewöhnlichen Bewegungen identifizieren"],
+          ["4.4", "Fehlende Abschlussbuchungen erkennen"],
+          ["4.5", "Negativ- und Vorzeichenprüfungen durchführen"],
+          ["4.6", "Plausibilität der Vorjahresvergleiche prüfen"],
+          ["4.7", "Risiko- und Prüfhinweise ableiten"],
+          ["4.8", "Offene Punkte in Aufgabenliste überführen"]
+        ],
+        5: [
+          ["5.1", "PBC-Liste erstellen"],
+          ["5.2", "Nachweise je Bilanzposten sammeln"],
+          ["5.3", "GuV-Nachweise sammeln"],
+          ["5.4", "Steuerunterlagen bereitstellen"],
+          ["5.5", "Rechts- und Vertragsunterlagen prüfen"],
+          ["5.6", "Abschlussakte strukturieren"],
+          ["5.7", "Review-Status je Nachweis vergeben"],
+          ["5.8", "Fehlende Unterlagen eskalieren"]
+        ],
+        6: [
+          ["6.1", "Bilanz erstellen"],
+          ["6.2", "GuV erstellen"],
+          ["6.3", "Anlagenspiegel erstellen"],
+          ["6.4", "Rückstellungsspiegel vorbereiten"],
+          ["6.5", "Forderungs- und Verbindlichkeitenspiegel erstellen"],
+          ["6.6", "Eigenkapitalentwicklung darstellen"],
+          ["6.7", "Anhang erstellen"],
+          ["6.8", "Lagebericht erstellen, falls erforderlich"],
+          ["6.9", "Angaben zur Größenklasse prüfen"],
+          ["6.10", "Offenlegungspflichten ableiten"],
+          ["6.11", "Interne Qualitätsprüfung durchführen"],
+          ["6.12", "Entwurfsabschluss freigeben"],
+          ["6.13", "Anhang-Readiness prüfen"],
+          ["6.13A", "Anhangangaben fachlich härten"],
+          ["6.14", "Lagebericht-Readiness prüfen"],
+          ["6.14A", "Lagebericht fachlich härten"],
+          ["6.15", "Final-Package-Readiness prüfen"]
+        ],
+        7: [
+          ["7.1", "Prüfungsdatenraum bereitstellen"],
+          ["7.2", "Eröffnungsbesprechung durchführen"],
+          ["7.3", "Prüferanfragen erfassen"],
+          ["7.4", "Prüferanfragen priorisieren"],
+          ["7.5", "Antworten und Nachweise liefern"],
+          ["7.6", "Rückfragen dokumentieren"],
+          ["7.7", "Prüfungsdifferenzen analysieren"],
+          ["7.8", "Management Adjustments entscheiden"],
+          ["7.9", "Nachbuchungen erfassen"],
+          ["7.10", "Aktualisierte SuSa und Berichte bereitstellen"],
+          ["7.11", "Prüfungsfeststellungen verfolgen"],
+          ["7.12", "Schlussbesprechung vorbereiten"]
+        ],
+        8: [
+          ["8.1", "Finale Prüferanpassungen übernehmen"],
+          ["8.2", "Bilanz, GuV, Anhang und Lagebericht finalisieren"],
+          ["8.3", "Vollständigkeitserklärung vorbereiten"],
+          ["8.4", "Going-Concern-Beurteilung dokumentieren"],
+          ["8.5", "Ereignisse nach dem Bilanzstichtag prüfen"],
+          ["8.6", "Geschäftsführungsfreigabe einholen"],
+          ["8.7", "Prüfungsbericht abstimmen"],
+          ["8.8", "Bestätigungsvermerk erhalten"],
+          ["8.9", "Feststellung des Jahresabschlusses vorbereiten"],
+          ["8.10", "Finale Version sperren"]
+        ],
+        9: [
+          ["9.1", "Offenlegungspflicht prüfen"],
+          ["9.2", "Offenlegungsunterlagen vorbereiten"],
+          ["9.3", "Einreichung beim Unternehmensregister/Bundesanzeiger"],
+          ["9.4", "Steuerbilanz / E-Bilanz vorbereiten"],
+          ["9.5", "Steuererklärungen vorbereiten"],
+          ["9.6", "Bankenreporting liefern"],
+          ["9.7", "Gesellschafter-Reporting erstellen"]
+        ],
+        10: [
+          ["10.1", "Abschlussakte finalisieren"],
+          ["10.2", "Offene Prüferpunkte in Folgejahr übertragen"],
+          ["10.3", "Dauerbuchungen und Folgeaufgaben anlegen"],
+          ["10.4", "Prozessqualität auswerten"],
+          ["10.5", "Verbesserungsmaßnahmen definieren"]
+        ]
+      };
+
       const isOpen = value => value == null ||
         (typeof value === "string" && (value.trim() === "" || value.trim() === "Zusatzangabe erforderlich"));
 
@@ -295,6 +425,21 @@
         <div class="metric metric-${modifier}">
           <strong>${value}</strong><span>${label}</span>
         </div>`;
+
+      const measureList = measures => `
+        <details class="measure-accordion">
+          <summary class="measure-summary">
+            <span>Maßnahmen</span>
+            <span class="measure-count">${measures.length}</span>
+            <span class="chevron measure-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <ol class="measure-list">
+            ${measures.map(([number, title]) => `<li class="measure-item">
+              <span class="measure-number">${number}</span>
+              <span>${title}</span>
+            </li>`).join("")}
+          </ol>
+        </details>`;
 
       try {
         const fixture = JSON.parse(document.getElementById("fixture-data").textContent);
@@ -311,18 +456,24 @@
           const blocked = step.id === 1 ? stepOneBlocked : 0;
           const overdue = 0;
 
-          return `<article class="step-card" aria-label="Schritt ${step.id}: ${step.name}">
-            <div class="step-top">
-              <div class="step-number">${String(step.id).padStart(2, "0")}</div>
-              <h3>${step.name}</h3>
+          return `<details class="step-card">
+            <summary class="step-summary" aria-label="Schritt ${step.id}: ${step.name}">
+              <div class="step-top">
+                <span class="step-number">${String(step.id).padStart(2, "0")}</span>
+                <h3>${step.name}</h3>
+                <span class="chevron step-chevron" aria-hidden="true">⌄</span>
+              </div>
+              <div class="metrics">
+                ${metric("offen", open, "open")}
+                ${metric("erledigt", done, "done")}
+                ${metric("blockiert", blocked, "blocked")}
+                ${metric("überfällig", overdue, "overdue")}
+              </div>
+            </summary>
+            <div class="step-content">
+              ${measureList(measuresByStep[step.id])}
             </div>
-            <div class="metrics">
-              ${metric("offen", open, "open")}
-              ${metric("erledigt", done, "done")}
-              ${metric("blockiert", blocked, "blocked")}
-              ${metric("überfällig", overdue, "overdue")}
-            </div>
-          </article>`;
+          </details>`;
         }).join("");
       } catch (error) {
         document.getElementById("data-error").style.display = "block";
