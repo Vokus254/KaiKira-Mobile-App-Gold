@@ -306,18 +306,37 @@
     .measure-count { padding: 4px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); font-size: 11px; font-variant-numeric: tabular-nums; }
     .measure-accordion[open] .measure-chevron { transform: rotate(180deg); }
     .measure-list { margin: 15px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
-    .measure-item { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
+    .measure-item { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: start; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
     .measure-item + .measure-item { border-top: 1px solid var(--line); }
     .measure-number { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
-    .measure-item-editable { padding: 0; }
+    .measure-item-editable { display: block; padding: 0; }
     .measure-edit-button { width: 100%; display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 13px 12px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
     .measure-edit-button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
-    .measure-status { padding: 4px 7px; border: 0; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
-    button.measure-status { cursor: pointer; }
-    button.measure-status:disabled { cursor: wait; opacity: .65; }
-    button.measure-status:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .measure-main { min-width: 0; }
+    .measure-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .measure-title { min-width: 0; font-weight: 720; }
+    .measure-assignment { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.35; }
+    .measure-status { display: inline-flex; align-items: center; padding: 4px 7px; border: 0; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
     .measure-status-open { background: var(--gold-soft); color: var(--gold); }
+    .measure-status-progress { background: rgba(106,166,255,.15); color: #8fbcff; }
+    .measure-status-review { background: rgba(242,166,90,.16); color: var(--orange); }
     .measure-status-done { background: rgba(112,214,167,.14); color: var(--green); }
+    .measure-flow { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; margin-top: 9px; }
+    .measure-flow-step { height: 4px; border-radius: 999px; background: #343840; }
+    .measure-flow-step.is-reached { background: var(--gold); }
+    .measure-flow-step.is-complete { background: var(--green); }
+    .measure-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .measure-action { min-height: 32px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.045); color: var(--text); font-size: 11px; font-weight: 750; cursor: pointer; }
+    .measure-action-primary { border-color: rgba(200,178,90,.38); background: var(--gold-soft); color: #f2dc83; }
+    .measure-action:disabled { cursor: wait; opacity: .55; }
+    .measure-action:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .return-dialog { width: min(430px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line); border-radius: 20px; background: #17191e; color: var(--text); box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+    .return-dialog::backdrop { background: rgba(0,0,0,.72); }
+    .return-dialog-inner { padding: 22px; }
+    .return-dialog h2 { margin: 0 0 8px; font-size: 21px; }
+    .return-dialog p { margin: 0 0 15px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .return-dialog textarea { min-height: 115px; margin: 7px 0 14px; }
+    .return-dialog-actions { display: flex; justify-content: flex-end; gap: 9px; }
 
     .questions { justify-content: center; }
     .questions-inner { width: 100%; }
@@ -493,6 +512,19 @@
         </div>
       </form>
     </section>
+
+    <dialog class="return-dialog" id="return-dialog" aria-labelledby="return-dialog-title">
+      <form class="return-dialog-inner" id="return-form" method="dialog">
+        <h2 id="return-dialog-title">Maßnahme zurückgeben</h2>
+        <p>Bitte beschreibe kurz, was noch bearbeitet werden muss. Der Kommentar wird zentral gespeichert.</p>
+        <label class="meta" for="return-comment">Rückgabekommentar (Pflichtfeld)</label>
+        <textarea id="return-comment" name="returnComment" required placeholder="Was soll überarbeitet werden?"></textarea>
+        <div class="return-dialog-actions">
+          <button class="button" type="button" data-cancel-return>Abbrechen</button>
+          <button class="button button-primary" type="submit">Zurückgeben</button>
+        </div>
+      </form>
+    </dialog>
   </main>
 
   <script type="application/json" id="fixture-data">{"format":"kaikira-project-state-display-fixture","version":1,"sourceFormat":"kaikira-project-state","sourceVersion":4,"values":{"unique::ph-7":"erledigt","unique::ph-12":"erledigt","unique::ph-14":"erledigt","unique::ph-15":"erledigt","unique::ph-16":"erledigt","unique::ph-18":"erledigt","unique::ph-20":"erledigt","unique::ph-21":"erledigt","unique::ph-22":"erledigt","unique::ph-26":"erledigt","unique::ph-27":"erledigt","unique::ph-28":"erledigt","unique::ph-29":"","unique::ph-34":"erledigt","unique::ph-35":"erledigt","unique::ph-36":"erledigt","unique::ph-37":"erledigt","unique::ph-38":"erledigt","unique::ph-40":"erledigt","unique::ph-42":"erledigt","unique::ph-43":"erledigt","unique::ph-44":"erledigt","unique::ph-45":"erledigt","unique::ph-46":"erledigt","unique::ph-47":"erledigt","unique::ph-48":"erledigt","unique::ph-50":"erledigt","unique::ph-51":"erledigt","unique::ph-55":"erledigt","unique::ph-56":"erledigt","unique::ph-58":"erledigt","unique::ph-59":"erledigt","unique::ph-60":"erledigt","unique::ph-62":"erledigt","unique::ph-63":"erledigt","unique::ph-65":"erledigt","unique::ph-66":"erledigt","unique::ph-67":"","unique::ph-68":"","unique::ph-69":"erledigt","unique::ph-70":"erledigt","unique::ph-71":"erledigt","unique::ph-72":"erledigt","unique::ph-73":"erledigt","unique::ph-74":"erledigt","unique::ph-75":"erledigt","unique::ph-76":"erledigt","unique::ph-77":"erledigt","unique::ph-78":"","unique::ph-79":"erledigt","unique::ph-81":"erledigt","unique::ph-83":"erledigt","unique::ph-84":"erledigt","unique::ph-85":"erledigt","unique::ph-86":"erledigt","unique::ph-88":"erledigt","unique::ph-89":"erledigt","unique::ph-91":"erledigt","unique::ph-92":"erledigt","unique::ph-93":"erledigt","unique::ph-94":"erledigt","unique::ph-95":"erledigt","unique::ph-96":"erledigt","unique::ph-97":"erledigt","unique::ph-98":"erledigt","unique::ph-99":"erledigt","unique::ph-100":"","unique::ph-101":"erledigt","unique::ph-102":"erledigt","unique::ph-103":"erledigt","unique::ph-104":"erledigt","unique::ph-105":"erledigt","unique::ph-106":"","unique::ph-107":"","unique::ph-108":"","unique::ph-109":"erledigt","unique::ph-110":"erledigt","unique::ph-111":"erledigt","unique::ph-112":"erledigt","unique::ph-113":"erledigt","unique::ph-114":"erledigt","unique::ph-115":"erledigt","unique::ph-116":"","unique::ph-117":"erledigt","unique::ph-118":"erledigt","unique::ph-119":"erledigt","unique::ph-120":"erledigt","unique::ph-121":"erledigt","unique::ph-122":"erledigt","unique::ph-123":"","unique::ph-124":"erledigt","unique::ph-125":"","unique::ph-126":"","unique::ph-127":"erledigt","unique::ph-128":"","unique::ph-129":"","unique::ph-130":"erledigt","unique::ph-131":"","unique::ph-132":"","unique::ph-133":"","unique::ph-134":"","unique::ph-135":"erledigt","unique::ph-136":"","unique::ph-137":"","unique::ph-138":"","unique::ph-139":"","unique::ph-140":"","unique::ph-141":"","unique::ph-142":"","unique::ph-143":"","unique::ph-144":"","unique::ph-145":"","unique::ph-146":"","unique::ph-147":"","unique::ph-148":"","unique::ph-149":"","unique::ph-150":"erledigt","unique::ph-151":"erledigt","unique::ph-152":"erledigt","unique::ph-153":"erledigt","unique::ph-154":"erledigt","unique::ph-155":"erledigt","unique::ph-156":"erledigt","unique::ph-157":"erledigt","unique::ph-158":"erledigt","unique::ph-159":"erledigt","unique::ph-160":"erledigt","unique::ph-161":"erledigt","unique::ph-162":"erledigt","unique::ph-163":"erledigt","unique::ph-164":"erledigt","unique::ph-165":"erledigt","unique::ph-166":"erledigt","unique::ph-167":"erledigt","unique::ph-168":"erledigt","unique::ph-169":"erledigt","unique::ph-170":"erledigt","unique::ph-171":"","unique::ph-172":"erledigt","unique::ph-173":"erledigt","unique::ph-174":"erledigt","unique::ph-175":"erledigt","unique::ph-176":"erledigt","unique::ph-177":"erledigt","unique::ph-178":"erledigt","unique::ph-179":"erledigt","unique::ph-180":"erledigt","unique::ph-181":"erledigt","unique::ph-182":"erledigt","unique::ph-183":"erledigt","unique::ph-184":"erledigt","unique::ph-185":"erledigt","unique::ph-186":"erledigt","unique::ph-187":"erledigt","unique::ph-188":"erledigt","unique::ph-189":"erledigt","unique::ph-190":"erledigt","unique::ph-191":"erledigt","unique::ph-192":"erledigt","unique::ph-193":"erledigt","unique::ph-195":"","unique::ph-196":"","unique::ph-197":"erledigt","unique::ph-198":"erledigt","unique::ph-199":"","unique::ph-200":"erledigt","unique::ph-201":"erledigt","unique::ph-202":"erledigt","unique::ph-203":"","unique::ph-204":"erledigt","unique::ph-205":"erledigt","unique::ph-206":"erledigt","unique::ph-207":"erledigt","unique::ph-208":"erledigt","unique::ph-209":"erledigt","unique::ph-210":"erledigt","unique::ph-212":"erledigt","unique::ph-213":"erledigt","unique::ph-214":"erledigt","unique::ph-215":"erledigt","unique::ph-216":"erledigt","unique::ph-217":"erledigt","unique::ph-218":"erledigt","unique::ph-219":"erledigt","unique::ph-220":"erledigt","unique::ph-221":"erledigt","unique::ph-222":"erledigt","unique::ph-223":"erledigt","unique::ph-224":"erledigt","unique::ph-225":"erledigt","unique::ph-226":"erledigt","unique::ph-227":"erledigt","unique::ph-228":"erledigt","unique::ph-229":"erledigt","unique::ph-230":"erledigt","unique::ph-231":"erledigt","unique::ph-232":"erledigt","unique::ph-233":"erledigt","unique::ph-235":"erledigt","unique::ph-236":"erledigt","unique::ph-237":"erledigt","unique::ph-244":"erledigt","unique::ph-245":"","unique::ph-246":"","unique::ph-247":"","unique::ph-248":"","unique::ph-249":"","unique::ph-250":"erledigt","unique::ph-251":"erledigt","unique::ph-252":"erledigt","unique::ph-253":"erledigt","unique::ph-254":"erledigt","unique::ph-255":"erledigt","unique::ph-256":"","unique::ph-257":"erledigt","unique::ph-258":"","unique::ph-259":"erledigt","unique::ph-260":"","unique::ph-261":"erledigt","unique::ph-262":"erledigt","unique::ph-263":"","unique::ph-264":"","unique::ph-265":"erledigt","unique::ph-266":"","unique::ph-267":"","unique::ph-268":"erledigt","unique::ph-269":"erledigt","unique::ph-270":"erledigt","unique::ph-271":"","unique::ph-275":"erledigt","unique::ph-276":"erledigt","unique::ph-279":"erledigt","unique::ph-281":"erledigt","unique::ph-282":"erledigt","unique::ph-283":"erledigt","unique::ph-284":"erledigt","unique::ph-285":"erledigt","unique::ph-286":"erledigt","unique::ph-287":"erledigt","unique::ph-288":"erledigt","unique::ph-289":"erledigt","unique::ph-290":"erledigt","unique::ph-291":"erledigt","unique::ph-292":"erledigt","unique::ph-293":"erledigt","unique::ph-294":"erledigt","unique::ph-295":"erledigt","unique::ph-296":"","unique::ph-297":"","unique::ph-298":"","unique::ph-301":"","unique::ph-302":"","unique::ph-305":"erledigt","unique::ph-306":"erledigt","unique::ph-308":"erledigt","unique::ph-312":"erledigt","unique::ph-314":"erledigt","unique::ph-316":"","unique::ph-317":"","unique::ph-318":"","unique::ph-319":"","unique::ph-320":"erledigt","unique::ph-322":"erledigt","unique::ph-323":"erledigt","unique::ph-324":"erledigt","unique::ph-325":"","unique::ph-326":"erledigt","unique::ph-327":"erledigt","unique::ph-328":"","unique::ph-329":"erledigt","unique::ph-330":"erledigt","unique::ph-331":"erledigt","unique::ph-332":"erledigt","unique::ph-333":"erledigt","unique::ph-334":"erledigt","unique::ph-335":"erledigt","unique::ph-336":"erledigt","unique::ph-337":"erledigt","unique::ph-338":"erledigt","unique::ph-339":"erledigt","unique::ph-340":"erledigt","unique::ph-341":"erledigt","unique::ph-342":"erledigt","unique::ph-343":"erledigt","unique::ph-344":"","unique::ph-345":"erledigt","unique::ph-346":"erledigt","unique::ph-348":"erledigt","unique::ph-349":"erledigt","unique::ph-350":"erledigt","unique::ph-351":"erledigt","unique::ph-352":"erledigt","unique::ph-353":"","unique::ph-354":"erledigt","unique::ph-355":"erledigt","unique::ph-356":"","unique::ph-357":"erledigt","unique::ph-358":"erledigt","unique::ph-359":"erledigt","unique::ph-360":"erledigt","unique::ph-361":"erledigt","unique::ph-362":"erledigt","unique::ph-363":"","unique::ph-364":"","unique::ph-365":"erledigt","unique::ph-366":"erledigt","unique::ph-367":"","unique::ph-368":"","unique::ph-369":"","unique::ph-370":"erledigt","unique::ph-371":"erledigt","unique::ph-372":"erledigt","unique::ph-373":"erledigt","unique::ph-374":"erledigt","unique::ph-375":"erledigt","unique::ph-376":"erledigt","unique::ph-377":"","unique::ph-378":"","unique::ph-379":"","unique::ph-380":"erledigt","unique::ph-381":"erledigt","unique::ph-383":"erledigt","unique::ph-384":"erledigt","unique::ph-385":"erledigt","unique::ph-386":"erledigt","unique::ph-387":"erledigt","unique::ph-388":"erledigt","unique::ph-389":"","unique::ph-390":"erledigt","unique::ph-391":"erledigt","unique::ph-392":"","unique::ph-393":"erledigt","unique::ph-394":"erledigt","unique::ph-396":"erledigt","unique::ph-397":"erledigt","unique::ph-398":"erledigt","unique::ph-399":"erledigt"},"corePresence":{"susa":true,"mapping":true,"structure":true}}</script>
@@ -510,7 +542,16 @@
         prueferInternReview: "Interner Prüfer/Review",
         freigebendeGeschaeftsfuehrung: "Freigebende Geschäftsführung",
         wirtschaftsprueferExtern: "Wirtschaftsprüfer (extern)",
-        adminRechteverwaltung: "Admin/Rechteverwaltung"
+        adminRechteverwaltung: "Admin/Rechteverwaltung",
+        leiterRechnungswesen: "Leitung Rechnungswesen",
+        leiterSteuern: "Leitung Steuern",
+        leiterControlling: "Leitung Controlling",
+        kreditorenbuchhalter: "Kreditorenbuchhaltung",
+        debitorenbuchhalter: "Debitorenbuchhaltung",
+        itAdministrator: "IT-Administration",
+        externerDienstleister: "Externer Dienstleister",
+        system_kai: "KAI",
+        system_kira: "KIRA"
       };
       let supabaseClient;
       let currentPerson = null;
@@ -672,6 +713,7 @@
       const rolesAreComplete = () => roleKeys.every(key => projectStateExtension.roles[key].trim().length > 0);
       const allMeasureNumbers = Object.values(measuresByStep).flat().map(([number]) => number);
       const measureStatuses = new Map(allMeasureNumbers.map(number => [number, "offen"]));
+      const measureAssignments = new Map();
       measureStatuses.set("1.2", rolesAreComplete() ? "erledigt" : "offen");
 
       const isOpen = value => value == null ||
@@ -693,7 +735,20 @@
       const measureStatus = number => number === "1.2"
         ? roleStatus()
         : measureStatuses.get(number) || "offen";
-      const measureStatusClass = status => status === "erledigt" ? "measure-status-done" : "measure-status-open";
+      const isCompletedStatus = status => status === "erledigt" || status === "freigegeben";
+      const measureStatusLabels = {
+        offen: "offen",
+        in_bearbeitung: "in Bearbeitung",
+        zur_freigabe: "zur Freigabe",
+        erledigt: "erledigt",
+        freigegeben: "freigegeben"
+      };
+      const measureStatusClass = status => {
+        if (isCompletedStatus(status)) return "measure-status-done";
+        if (status === "in_bearbeitung") return "measure-status-progress";
+        if (status === "zur_freigabe") return "measure-status-review";
+        return "measure-status-open";
+      };
       const roleMeasure = (number, title) => `<li class="measure-item measure-item-editable">
         <button class="measure-edit-button" type="button" data-edit-roles>
           <span class="measure-number">${number}</span>
@@ -706,8 +761,15 @@
         const status = measureStatus(number);
         return `<li class="measure-item">
           <span class="measure-number">${number}</span>
-          <span>${title}</span>
-          <button class="measure-status ${measureStatusClass(status)}" type="button" data-measure-status data-measure-nr="${number}" aria-pressed="${status === "erledigt"}" aria-label="Maßnahme ${number}: Status ${status}. Antippen zum Ändern.">${status}</button>
+          <div class="measure-main" data-measure-row="${number}">
+            <div class="measure-title-row">
+              <span class="measure-title">${title}</span>
+              <span class="measure-status ${measureStatusClass(status)}" data-measure-status>${measureStatusLabels[status]}</span>
+            </div>
+            <p class="measure-assignment" data-measure-assignment>Zuweisung wird geladen …</p>
+            <div class="measure-flow" data-measure-flow aria-label="Statusverlauf"></div>
+            <div class="measure-actions" data-measure-actions></div>
+          </div>
         </li>`;
       };
 
@@ -738,7 +800,7 @@
           const blocked = step.id === 1 ? stepOneBlocked : 0;
           const overdue = 0;
           const measures = measuresByStep[step.id];
-          const completedMeasures = measures.filter(([number]) => measureStatus(number) === "erledigt").length;
+          const completedMeasures = measures.filter(([number]) => isCompletedStatus(measureStatus(number))).length;
           const totalMeasures = measures.length;
 
           return `<details class="step-card" data-step-id="${step.id}">
@@ -771,14 +833,60 @@
       const refreshMeasureStatuses = () => {
         measureStatuses.set("1.2", roleStatus());
 
-        document.querySelectorAll("[data-measure-status]").forEach(button => {
-          const number = button.dataset.measureNr;
+        document.querySelectorAll("[data-measure-row]").forEach(row => {
+          const number = row.dataset.measureRow;
           const status = measureStatus(number);
-          button.textContent = status;
-          button.classList.toggle("measure-status-done", status === "erledigt");
-          button.classList.toggle("measure-status-open", status !== "erledigt");
-          button.setAttribute("aria-pressed", String(status === "erledigt"));
-          button.setAttribute("aria-label", `Maßnahme ${number}: Status ${status}. Antippen zum Ändern.`);
+          const assignment = measureAssignments.get(number);
+          const statusBadge = row.querySelector("[data-measure-status]");
+          statusBadge.textContent = measureStatusLabels[status] || status;
+          statusBadge.className = `measure-status ${measureStatusClass(status)}`;
+
+          const assignmentText = row.querySelector("[data-measure-assignment]");
+          if (assignment) {
+            const bearerRole = peopleRoleLabels[assignment.bearbeiter_rolle] || assignment.bearbeiter_rolle;
+            let text = `Bearbeitung: ${assignment.bearbeiter_name_source} (${bearerRole})`;
+            if (assignment.freigeber_name_source) {
+              const approverRole = peopleRoleLabels[assignment.freigeber_rolle] || assignment.freigeber_rolle;
+              text += ` · Freigabe: ${assignment.freigeber_name_source} (${approverRole})`;
+            }
+            assignmentText.textContent = text;
+          } else {
+            assignmentText.textContent = "Keine Zuweisung hinterlegt";
+          }
+
+          const hasApproval = Boolean(assignment?.freigeber_person);
+          const stages = hasApproval
+            ? ["offen", "in_bearbeitung", "zur_freigabe", "freigegeben"]
+            : ["offen", "erledigt"];
+          const currentStage = Math.max(0, stages.indexOf(status));
+          const flow = row.querySelector("[data-measure-flow]");
+          flow.innerHTML = stages.map((stage, index) => {
+            const reached = index <= currentStage ? " is-reached" : "";
+            const complete = isCompletedStatus(status) && index <= currentStage ? " is-complete" : "";
+            return `<span class="measure-flow-step${reached}${complete}" title="${measureStatusLabels[stage]}"></span>`;
+          }).join("");
+          flow.setAttribute("aria-label", `${stages.length}-stufiger Ablauf, aktuell ${measureStatusLabels[status] || status}`);
+
+          const actions = [];
+          const isAdmin = currentPerson?.role === "adminRechteverwaltung";
+          const isBearer = Boolean(currentPerson && assignment?.bearbeiter_person === currentPerson.id);
+          const isApprover = Boolean(currentPerson && assignment?.freigeber_person === currentPerson.id);
+          if (!hasApproval && status === "offen" && (isBearer || isAdmin)) {
+            actions.push(["erledigt", "Als erledigt markieren", true]);
+          } else if (hasApproval && status === "offen" && (isBearer || isAdmin)) {
+            actions.push(["in_bearbeitung", "Bearbeitung starten", true]);
+          } else if (hasApproval && status === "in_bearbeitung" && (isBearer || isAdmin)) {
+            actions.push(["zur_freigabe", "Zur Freigabe einreichen", true]);
+          } else if (hasApproval && status === "zur_freigabe" && (isApprover || isAdmin)) {
+            if (!isBearer) actions.push(["freigegeben", "Freigeben", true]);
+            actions.push(["in_bearbeitung", "Mit Kommentar zurückgeben", false, true]);
+          }
+          if (isAdmin && isCompletedStatus(status)) {
+            actions.push(["offen", "Wiedereröffnen", false]);
+          }
+          row.querySelector("[data-measure-actions]").innerHTML = actions.map(([next, label, primary, needsComment]) =>
+            `<button class="measure-action${primary ? " measure-action-primary" : ""}" type="button" data-change-status="${next}" data-measure-nr="${number}"${needsComment ? " data-needs-comment" : ""}>${label}</button>`
+          ).join("");
         });
 
         document.querySelectorAll("[data-role-status]").forEach(status => {
@@ -790,7 +898,7 @@
 
         document.querySelectorAll("[data-step-id]").forEach(card => {
           const measures = measuresByStep[Number(card.dataset.stepId)] || [];
-          const done = measures.filter(([number]) => measureStatus(number) === "erledigt").length;
+          const done = measures.filter(([number]) => isCompletedStatus(measureStatus(number))).length;
           const progress = card.querySelector("[data-measure-progress]");
           card.querySelector("[data-measure-progress-done]").textContent = done;
           card.querySelector("[data-measure-progress-total]").textContent = measures.length;
@@ -798,52 +906,59 @@
         });
       };
 
-      const persistMeasureStatus = async (number, status, button = null) => {
+      const persistMeasureStatus = async (number, status, comment = null, button = null) => {
         if (!supabaseClient || !currentPerson) return false;
         const errorBox = document.getElementById("measure-error");
         errorBox.style.display = "none";
         if (button) button.disabled = true;
 
-        const { data, error } = await supabaseClient
-          .from("measure_status")
-          .update({ status })
-          .eq("nr", number)
-          .select("nr,status")
-          .maybeSingle();
+        const { error } = await supabaseClient.rpc("change_measure_status", {
+          p_nr: number,
+          p_new_status: status,
+          p_kommentar: comment
+        });
 
         if (button) button.disabled = false;
-        if (error || !data) {
+        if (error) {
           console.error(error);
-          errorBox.textContent = `Der Status der Maßnahme ${number} konnte nicht gespeichert werden. Bitte versuche es erneut.`;
+          const friendlyErrors = {
+            NUR_BEARBEITER_DARF_ERLEDIGEN: "Nur die zugewiesene Bearbeitung darf diese Maßnahme erledigen.",
+            NUR_BEARBEITER_DARF_STARTEN: "Nur die zugewiesene Bearbeitung darf diese Maßnahme starten.",
+            NUR_BEARBEITER_DARF_EINREICHEN: "Nur die zugewiesene Bearbeitung darf diese Maßnahme einreichen.",
+            NUR_FREIGEBER_DARF_FREIGEBEN: "Nur die zugewiesene Freigabeperson darf diese Maßnahme freigeben.",
+            NUR_FREIGEBER_DARF_ZURUECKGEBEN: "Nur die zugewiesene Freigabeperson darf diese Maßnahme zurückgeben.",
+            SELBSTFREIGABE_NICHT_ERLAUBT: "Eine eigene Maßnahme darf nicht selbst freigegeben werden.",
+            RUECKGABEKOMMENTAR_ERFORDERLICH: "Für die Rückgabe ist ein Kommentar erforderlich.",
+            STATUSWECHSEL_NICHT_ERLAUBT: "Dieser Statuswechsel ist nicht erlaubt."
+          };
+          const code = Object.keys(friendlyErrors).find(key => error.message?.includes(key));
+          errorBox.textContent = code ? friendlyErrors[code] : `Der Status der Maßnahme ${number} konnte nicht gespeichert werden. Bitte versuche es erneut.`;
           errorBox.style.display = "block";
           return false;
         }
 
-        measureStatuses.set(number, data.status);
+        measureStatuses.set(number, status);
         refreshMeasureStatuses();
         return true;
       };
 
       const loadMeasureStatuses = async () => {
-        const { data, error } = await supabaseClient
-          .from("measure_status")
-          .select("nr,status");
+        const [statusResult, assignmentResult] = await Promise.all([
+          supabaseClient.from("measure_status").select("nr,status"),
+          supabaseClient.from("measure_default_assignment").select("nr,bearbeiter_rolle,bearbeiter_person,freigeber_rolle,freigeber_person,bearbeiter_name_source,freigeber_name_source")
+        ]);
 
-        if (error) {
-          console.error(error);
+        if (statusResult.error || assignmentResult.error) {
+          console.error(statusResult.error || assignmentResult.error);
           const errorBox = document.getElementById("measure-error");
-          errorBox.textContent = "Die zentralen Maßnahmenstatus konnten nicht geladen werden. Bitte lade die App erneut.";
+          errorBox.textContent = "Die zentralen Maßnahmenstatus oder Zuweisungen konnten nicht geladen werden. Bitte lade die App erneut.";
           errorBox.style.display = "block";
           return;
         }
 
-        data.forEach(row => measureStatuses.set(row.nr, row.status));
-        const derivedRoleStatus = roleStatus();
-        if (measureStatuses.get("1.2") !== derivedRoleStatus) {
-          await persistMeasureStatus("1.2", derivedRoleStatus);
-        } else {
-          refreshMeasureStatuses();
-        }
+        statusResult.data.forEach(row => measureStatuses.set(row.nr, row.status));
+        assignmentResult.data.forEach(row => measureAssignments.set(row.nr, row));
+        refreshMeasureStatuses();
       };
 
       const showView = id => {
@@ -883,6 +998,11 @@
         });
       });
 
+      const returnDialog = document.getElementById("return-dialog");
+      const returnForm = document.getElementById("return-form");
+      const returnComment = document.getElementById("return-comment");
+      let pendingReturnNumber = null;
+
       document.getElementById("steps").addEventListener("click", async event => {
         const roleEditorButton = event.target.closest("[data-edit-roles]");
         if (roleEditorButton) {
@@ -891,12 +1011,38 @@
           return;
         }
 
-        const statusButton = event.target.closest("[data-measure-status]");
+        const statusButton = event.target.closest("[data-change-status]");
         if (!statusButton || statusButton.disabled) return;
         const number = statusButton.dataset.measureNr;
         if (!number || number === "1.2") return;
-        const nextStatus = measureStatus(number) === "erledigt" ? "offen" : "erledigt";
-        await persistMeasureStatus(number, nextStatus, statusButton);
+        if (statusButton.hasAttribute("data-needs-comment")) {
+          pendingReturnNumber = number;
+          returnComment.value = "";
+          returnDialog.showModal();
+          requestAnimationFrame(() => returnComment.focus());
+          return;
+        }
+        await persistMeasureStatus(number, statusButton.dataset.changeStatus, null, statusButton);
+      });
+
+      document.querySelector("[data-cancel-return]").addEventListener("click", () => {
+        pendingReturnNumber = null;
+        returnDialog.close();
+      });
+
+      returnForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const comment = returnComment.value.trim();
+        if (!pendingReturnNumber || !comment) {
+          returnComment.reportValidity();
+          return;
+        }
+        const submitButton = returnForm.querySelector('[type="submit"]');
+        const saved = await persistMeasureStatus(pendingReturnNumber, "in_bearbeitung", comment, submitButton);
+        if (saved) {
+          pendingReturnNumber = null;
+          returnDialog.close();
+        }
       });
 
       document.querySelector("[data-return-measures]").addEventListener("click", openStepOneMeasures);
@@ -913,7 +1059,6 @@
           // Die Daten bleiben für die laufende Sitzung im klar benannten Objekt verfügbar.
         }
         updateRoleStatus();
-        await persistMeasureStatus("1.2", roleStatus());
         openStepOneMeasures();
       });
 
