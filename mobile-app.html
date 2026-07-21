@@ -298,7 +298,8 @@
     .step-card[open] > .step-summary h3 { margin-top: 1px; font-size: 17px; line-height: 1.28; }
     .step-card[open] > .step-summary .chevron { font-size: 20px; line-height: 38px; }
     .metrics { display: none; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 22px; }
-    .step-card[open] > .step-summary .metrics { display: grid; }
+    /* Die ph-Key-Kennzahlen bleiben berechnet und im Markup, sind in der vereinfachten UI aber ausgeblendet. */
+    .step-card[open] > .step-summary .metrics { display: none; }
     .metric { min-width: 0; padding: 10px 5px 9px; border-radius: 12px; background: rgba(0,0,0,.2); text-align: center; }
     .metric strong { display: block; margin-bottom: 5px; font-size: 19px; font-variant-numeric: tabular-nums; }
     .metric span { display: block; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; text-transform: uppercase; letter-spacing: .04em; }
