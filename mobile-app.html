@@ -306,13 +306,16 @@
     .measure-count { padding: 4px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); font-size: 11px; font-variant-numeric: tabular-nums; }
     .measure-accordion[open] .measure-chevron { transform: rotate(180deg); }
     .measure-list { margin: 15px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
-    .measure-item { display: grid; grid-template-columns: 54px 1fr; gap: 10px; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
+    .measure-item { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
     .measure-item + .measure-item { border-top: 1px solid var(--line); }
     .measure-number { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
     .measure-item-editable { padding: 0; }
     .measure-edit-button { width: 100%; display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 13px 12px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
     .measure-edit-button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
-    .measure-status { padding: 4px 7px; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .measure-status { padding: 4px 7px; border: 0; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+    button.measure-status { cursor: pointer; }
+    button.measure-status:disabled { cursor: wait; opacity: .65; }
+    button.measure-status:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     .measure-status-open { background: var(--gold-soft); color: var(--gold); }
     .measure-status-done { background: rgba(112,214,167,.14); color: var(--green); }
 
@@ -435,6 +438,7 @@
           <p class="overview-intro-copy">Hier sind die 10 Schritte zum erfolgreichen Jahresabschluss. Grün zeigt Dir die erledigten Aufgaben, Orange die Gesamtzahl je Schritt.</p>
         </section>
         <div class="steps" id="steps" aria-live="polite"></div>
+        <p class="error" id="measure-error" role="alert">Der Maßnahmenstatus konnte nicht gespeichert werden. Bitte versuche es erneut.</p>
         <p class="error" id="data-error" role="alert">Die Fixture-Daten konnten nicht gelesen werden.</p>
       </div>
     </section>
@@ -666,6 +670,9 @@
       };
       let projectStateExtension = readProjectStateExtension();
       const rolesAreComplete = () => roleKeys.every(key => projectStateExtension.roles[key].trim().length > 0);
+      const allMeasureNumbers = Object.values(measuresByStep).flat().map(([number]) => number);
+      const measureStatuses = new Map(allMeasureNumbers.map(number => [number, "offen"]));
+      measureStatuses.set("1.2", rolesAreComplete() ? "erledigt" : "offen");
 
       const isOpen = value => value == null ||
         (typeof value === "string" && (value.trim() === "" || value.trim() === "Zusatzangabe erforderlich"));
@@ -683,6 +690,10 @@
         </div>`;
 
       const roleStatus = () => rolesAreComplete() ? "erledigt" : "offen";
+      const measureStatus = number => number === "1.2"
+        ? roleStatus()
+        : measureStatuses.get(number) || "offen";
+      const measureStatusClass = status => status === "erledigt" ? "measure-status-done" : "measure-status-open";
       const roleMeasure = (number, title) => `<li class="measure-item measure-item-editable">
         <button class="measure-edit-button" type="button" data-edit-roles>
           <span class="measure-number">${number}</span>
@@ -690,6 +701,15 @@
           <span class="measure-status ${rolesAreComplete() ? "measure-status-done" : "measure-status-open"}" data-role-status>${roleStatus()}</span>
         </button>
       </li>`;
+
+      const statusMeasure = (number, title) => {
+        const status = measureStatus(number);
+        return `<li class="measure-item">
+          <span class="measure-number">${number}</span>
+          <span>${title}</span>
+          <button class="measure-status ${measureStatusClass(status)}" type="button" data-measure-status data-measure-nr="${number}" aria-pressed="${status === "erledigt"}" aria-label="Maßnahme ${number}: Status ${status}. Antippen zum Ändern.">${status}</button>
+        </li>`;
+      };
 
       const measureList = measures => `
         <details class="measure-accordion">
@@ -699,10 +719,7 @@
             <span class="chevron measure-chevron" aria-hidden="true">⌄</span>
           </summary>
           <ol class="measure-list">
-            ${measures.map(([number, title]) => number === "1.2" ? roleMeasure(number, title) : `<li class="measure-item">
-              <span class="measure-number">${number}</span>
-              <span>${title}</span>
-            </li>`).join("")}
+            ${measures.map(([number, title]) => number === "1.2" ? roleMeasure(number, title) : statusMeasure(number, title)).join("")}
           </ol>
         </details>`;
 
@@ -720,15 +737,17 @@
           const done = entries.length - open;
           const blocked = step.id === 1 ? stepOneBlocked : 0;
           const overdue = 0;
-          const total = open + done + blocked + overdue;
+          const measures = measuresByStep[step.id];
+          const completedMeasures = measures.filter(([number]) => measureStatus(number) === "erledigt").length;
+          const totalMeasures = measures.length;
 
-          return `<details class="step-card">
+          return `<details class="step-card" data-step-id="${step.id}">
             <summary class="step-summary" aria-label="Schritt ${step.id}: ${step.name}">
               <div class="step-top">
                 <span class="step-number">${String(step.id).padStart(2, "0")}</span>
                 <h3>${step.name}</h3>
-                <div class="step-progress" aria-label="${done} von ${total} Aufgaben erledigt">
-                  <span class="progress-done">${done}</span><span class="progress-separator">/</span><span class="progress-total">${total}</span>
+                <div class="step-progress" data-measure-progress aria-label="${completedMeasures} von ${totalMeasures} Maßnahmen erledigt">
+                  <span class="progress-done" data-measure-progress-done>${completedMeasures}</span><span class="progress-separator">/</span><span class="progress-total" data-measure-progress-total>${totalMeasures}</span>
                 </div>
                 <span class="chevron step-chevron" aria-hidden="true">⌄</span>
               </div>
@@ -740,7 +759,7 @@
               </div>
             </summary>
             <div class="step-content">
-              ${measureList(measuresByStep[step.id])}
+              ${measureList(measures)}
             </div>
           </details>`;
         }).join("");
@@ -748,6 +767,84 @@
         document.getElementById("data-error").style.display = "block";
         console.error(error);
       }
+
+      const refreshMeasureStatuses = () => {
+        measureStatuses.set("1.2", roleStatus());
+
+        document.querySelectorAll("[data-measure-status]").forEach(button => {
+          const number = button.dataset.measureNr;
+          const status = measureStatus(number);
+          button.textContent = status;
+          button.classList.toggle("measure-status-done", status === "erledigt");
+          button.classList.toggle("measure-status-open", status !== "erledigt");
+          button.setAttribute("aria-pressed", String(status === "erledigt"));
+          button.setAttribute("aria-label", `Maßnahme ${number}: Status ${status}. Antippen zum Ändern.`);
+        });
+
+        document.querySelectorAll("[data-role-status]").forEach(status => {
+          const complete = rolesAreComplete();
+          status.textContent = complete ? "erledigt" : "offen";
+          status.classList.toggle("measure-status-done", complete);
+          status.classList.toggle("measure-status-open", !complete);
+        });
+
+        document.querySelectorAll("[data-step-id]").forEach(card => {
+          const measures = measuresByStep[Number(card.dataset.stepId)] || [];
+          const done = measures.filter(([number]) => measureStatus(number) === "erledigt").length;
+          const progress = card.querySelector("[data-measure-progress]");
+          card.querySelector("[data-measure-progress-done]").textContent = done;
+          card.querySelector("[data-measure-progress-total]").textContent = measures.length;
+          progress.setAttribute("aria-label", `${done} von ${measures.length} Maßnahmen erledigt`);
+        });
+      };
+
+      const persistMeasureStatus = async (number, status, button = null) => {
+        if (!supabaseClient || !currentPerson) return false;
+        const errorBox = document.getElementById("measure-error");
+        errorBox.style.display = "none";
+        if (button) button.disabled = true;
+
+        const { data, error } = await supabaseClient
+          .from("measure_status")
+          .update({ status })
+          .eq("nr", number)
+          .select("nr,status")
+          .maybeSingle();
+
+        if (button) button.disabled = false;
+        if (error || !data) {
+          console.error(error);
+          errorBox.textContent = `Der Status der Maßnahme ${number} konnte nicht gespeichert werden. Bitte versuche es erneut.`;
+          errorBox.style.display = "block";
+          return false;
+        }
+
+        measureStatuses.set(number, data.status);
+        refreshMeasureStatuses();
+        return true;
+      };
+
+      const loadMeasureStatuses = async () => {
+        const { data, error } = await supabaseClient
+          .from("measure_status")
+          .select("nr,status");
+
+        if (error) {
+          console.error(error);
+          const errorBox = document.getElementById("measure-error");
+          errorBox.textContent = "Die zentralen Maßnahmenstatus konnten nicht geladen werden. Bitte lade die App erneut.";
+          errorBox.style.display = "block";
+          return;
+        }
+
+        data.forEach(row => measureStatuses.set(row.nr, row.status));
+        const derivedRoleStatus = roleStatus();
+        if (measureStatuses.get("1.2") !== derivedRoleStatus) {
+          await persistMeasureStatus("1.2", derivedRoleStatus);
+        } else {
+          refreshMeasureStatuses();
+        }
+      };
 
       const showView = id => {
         document.querySelectorAll(".view").forEach(view => {
@@ -767,12 +864,7 @@
       };
 
       const updateRoleStatus = () => {
-        document.querySelectorAll("[data-role-status]").forEach(status => {
-          const complete = rolesAreComplete();
-          status.textContent = complete ? "erledigt" : "offen";
-          status.classList.toggle("measure-status-done", complete);
-          status.classList.toggle("measure-status-open", !complete);
-        });
+        refreshMeasureStatuses();
       };
 
       const openStepOneMeasures = () => {
@@ -791,14 +883,25 @@
         });
       });
 
-      document.querySelector("[data-edit-roles]").addEventListener("click", () => {
-        fillRoleForm();
-        showView("role-editor");
+      document.getElementById("steps").addEventListener("click", async event => {
+        const roleEditorButton = event.target.closest("[data-edit-roles]");
+        if (roleEditorButton) {
+          fillRoleForm();
+          showView("role-editor");
+          return;
+        }
+
+        const statusButton = event.target.closest("[data-measure-status]");
+        if (!statusButton || statusButton.disabled) return;
+        const number = statusButton.dataset.measureNr;
+        if (!number || number === "1.2") return;
+        const nextStatus = measureStatus(number) === "erledigt" ? "offen" : "erledigt";
+        await persistMeasureStatus(number, nextStatus, statusButton);
       });
 
       document.querySelector("[data-return-measures]").addEventListener("click", openStepOneMeasures);
 
-      document.getElementById("roles-form").addEventListener("submit", event => {
+      document.getElementById("roles-form").addEventListener("submit", async event => {
         event.preventDefault();
         const form = event.currentTarget;
         projectStateExtension = {
@@ -810,6 +913,7 @@
           // Die Daten bleiben für die laufende Sitzung im klar benannten Objekt verfügbar.
         }
         updateRoleStatus();
+        await persistMeasureStatus("1.2", roleStatus());
         openStepOneMeasures();
       });
 
@@ -906,6 +1010,7 @@
 
         const needsPasswordSetup = session.user.user_metadata?.password_setup_completed !== true;
         showPerson(person, needsPasswordSetup ? "password-setup" : "welcome");
+        await loadMeasureStatuses();
       };
 
       passwordSetupForm.addEventListener("submit", async event => {
