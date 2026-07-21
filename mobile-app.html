@@ -61,7 +61,7 @@
       pointer-events: auto;
     }
 
-    .login, .password-setup, .welcome, .questions, .role-editor, .assignment-admin, .system-check {
+    .login, .password-setup, .welcome, .questions, .role-editor, .assignment-admin, .system-check, .financial-overview {
       min-height: 100%;
       padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
       display: flex;
@@ -199,7 +199,8 @@
     .app.is-authenticated .questions,
     .app.is-authenticated .role-editor,
     .app.is-authenticated .assignment-admin,
-    .app.is-authenticated .system-check { padding-top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
+    .app.is-authenticated .system-check,
+    .app.is-authenticated .financial-overview { padding-top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
 
     .overview {
       height: 100%;
@@ -400,6 +401,24 @@
     .system-apply-status { min-height: 20px; margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
     .system-apply-status.is-success { color: var(--green); }
     .system-apply-status.is-error { color: #ffd5d1; }
+    .financial-overview { display: block; overflow-y: auto; }
+    .financial-head { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; margin-bottom: 18px; }
+    .financial-overview h2 { margin: 5px 0 7px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 10vw, 48px); font-weight: 500; line-height: 1; letter-spacing: -.04em; }
+    .financial-copy, .financial-stand { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .financial-stand { margin-bottom: 12px; color: #d7d8dc; }
+    .financial-grid { display: grid; gap: 10px; }
+    .financial-card { padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.022)); }
+    .financial-card h3 { margin: 0 0 12px; color: var(--gold); font-size: 13px; }
+    .financial-years { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .financial-value { min-width: 0; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.2); }
+    .financial-year { display: block; margin-bottom: 5px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .financial-amount { display: block; color: var(--text); font-size: clamp(15px, 4.6vw, 20px); font-weight: 850; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .financial-vj-note { display: block; margin-top: 7px; color: #c8bb86; font-size: 9px; line-height: 1.35; }
+    .financial-note { margin: 12px 0 0; padding: 11px 12px; border-left: 2px solid var(--gold); background: var(--gold-soft); color: #ddd5b4; font-size: 10px; line-height: 1.45; }
+    .financial-empty { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.025); }
+    .financial-empty h3 { margin: 0 0 8px; font-size: 17px; }
+    .financial-empty p { margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .financial-error { display: none; margin-top: 12px; color: #ffd5d1; font-size: 12px; line-height: 1.45; }
 
     .questions { justify-content: center; }
     .questions-inner { width: 100%; }
@@ -513,6 +532,7 @@
               <h2 id="overview-title">10 Prozessschritte</h2>
             </div>
             <div class="head-actions">
+              <button class="admin-launch" id="financial-overview-button" type="button">Finanzübersicht</button>
               <button class="admin-launch" id="system-check-button" type="button" hidden>System-Check</button>
               <button class="admin-launch" id="assignment-admin-button" type="button" hidden>Maßnahmen zuweisen</button>
               <button class="back" type="button" data-go="welcome" aria-label="Zurück zur Begrüßung">←</button>
@@ -527,6 +547,28 @@
         <p class="error" id="measure-error" role="alert">Der Maßnahmenstatus konnte nicht gespeichert werden. Bitte versuche es erneut.</p>
         <p class="error" id="data-error" role="alert">Die Fixture-Daten konnten nicht gelesen werden.</p>
       </div>
+    </section>
+
+    <section class="view financial-overview" id="financial-overview" aria-labelledby="financial-overview-title">
+      <div class="financial-head">
+        <button class="back" type="button" data-financial-return-overview aria-label="Zurück zur Prozessübersicht">←</button>
+        <div>
+          <p class="eyebrow">Jahresabschluss 2025</p>
+          <h2 id="financial-overview-title">Finanzübersicht</h2>
+          <p class="financial-copy">Vier konsolidierte Kennzahlen aus dem letzten bestätigten System-Check.</p>
+        </div>
+      </div>
+      <div id="financial-content" hidden>
+        <p class="financial-stand" id="financial-stand"></p>
+        <div class="financial-grid" id="financial-grid"></div>
+        <p class="financial-note">Technisch aus dem zuletzt bestätigten Core-JSON erzeugt und abgestimmt. Keine Live-Verbindung zu core.html und keine fachliche Prüfung oder Freigabe.</p>
+      </div>
+      <div class="financial-empty" id="financial-empty" hidden>
+        <h3>Noch keine Daten importiert</h3>
+        <p>Die Finanzübersicht wird nach dem ersten bestätigten System-Check angezeigt.</p>
+        <button class="button button-primary" id="financial-empty-system-check" type="button" hidden>System-Check öffnen</button>
+      </div>
+      <p class="financial-error" id="financial-error" role="alert">Die Finanzkennzahlen konnten nicht geladen werden. Bitte versuche es erneut.</p>
     </section>
 
     <section class="view questions" id="questions" aria-labelledby="questions-title">
@@ -1118,6 +1160,63 @@
         refreshMeasureStatuses();
       };
 
+      const formatFinancialAmount = value => new Intl.NumberFormat("de-DE", {
+        style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2
+      }).format(Number(value));
+      const previousYearNote = "VJ-Wert rechnerisch aus denselben geprüften Formeln abgeleitet, aber nicht zusätzlich durch integrityCheck im Core-Export gegengeprüft.";
+      const renderFinancialSnapshot = (snapshot, exportedAt) => {
+        const cards = [
+          { title: "Bilanzsumme", bj: snapshot.balance_bj, vj: snapshot.balance_vj },
+          { title: "Umsatzerlöse", bj: snapshot.revenue_bj, vj: snapshot.revenue_vj },
+          { title: "Ergebnis vor Steuern", bj: snapshot.ebt_bj, vj: snapshot.ebt_vj, note: true },
+          { title: "Ergebnis nach Steuern", bj: snapshot.after_tax_bj, vj: snapshot.after_tax_vj, note: true }
+        ];
+        document.getElementById("financial-grid").innerHTML = cards.map(card => `<article class="financial-card">
+          <h3>${card.title}</h3>
+          <div class="financial-years">
+            <div class="financial-value"><span class="financial-year">BJ</span><strong class="financial-amount">${formatFinancialAmount(card.bj)}</strong></div>
+            <div class="financial-value"><span class="financial-year">VJ</span><strong class="financial-amount">${formatFinancialAmount(card.vj)}</strong>${card.note ? `<small class="financial-vj-note">${previousYearNote}</small>` : ""}</div>
+          </div>
+        </article>`).join("");
+        const date = exportedAt ? new Date(exportedAt) : null;
+        document.getElementById("financial-stand").textContent = date && !Number.isNaN(date.valueOf())
+          ? `Stand: ${new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(date)} – letzter bestätigter Core-JSON-Import`
+          : "Stand: letzter bestätigter Core-JSON-Import ohne Exportzeitstempel";
+        document.getElementById("financial-content").hidden = false;
+        document.getElementById("financial-empty").hidden = true;
+      };
+      const renderFinancialEmptyState = () => {
+        document.getElementById("financial-content").hidden = true;
+        document.getElementById("financial-empty").hidden = false;
+        document.getElementById("financial-empty-system-check").hidden = currentPerson?.role !== "adminRechteverwaltung";
+      };
+      const loadFinancialOverview = async () => {
+        const errorBox = document.getElementById("financial-error");
+        errorBox.style.display = "none";
+        document.getElementById("financial-content").hidden = true;
+        document.getElementById("financial-empty").hidden = true;
+        const { data: snapshot, error } = await supabaseClient.from("financial_kpi_snapshots")
+          .select("run_id,balance_bj,balance_vj,revenue_bj,revenue_vj,ebt_bj,ebt_vj,after_tax_bj,after_tax_vj")
+          .order("run_id", { ascending: false }).limit(1).maybeSingle();
+        if (error) {
+          console.error(error);
+          errorBox.style.display = "block";
+          return;
+        }
+        if (!snapshot) {
+          renderFinancialEmptyState();
+          return;
+        }
+        const { data: run, error: runError } = await supabaseClient.from("system_check_runs")
+          .select("exported_at").eq("id", snapshot.run_id).maybeSingle();
+        if (runError) {
+          console.error(runError);
+          errorBox.style.display = "block";
+          return;
+        }
+        renderFinancialSnapshot(snapshot, run?.exported_at || null);
+      };
+
       const SYSTEM_TOLERANCE = 0.01;
       const normalizeTarget = value => String(value ?? "").trim().toUpperCase().replace(/\s+/g, "_");
       const finiteNumber = value => typeof value === "number" && Number.isFinite(value);
@@ -1246,19 +1345,36 @@
         const ebtBJ = operatingResultBJ + interestIncomeBJ - interestExpenseBJ;
         const afterTaxBJ = ebtBJ - incomeTaxBJ;
         const formulaAnnualBJ = afterTaxBJ - otherTaxesBJ;
+        const inventoryVJ = -aggregate("G_BEST").vj;
+        const ownVJ = -aggregate("G_AEL").vj;
+        const otherIncomeVJ = Math.abs(aggregate("G_SBE").vj);
+        const materialVJ = Math.abs(aggregate("G_MAT_A").vj) + Math.abs(aggregate("G_MAT_B").vj);
+        const personnelVJ = Math.abs(aggregate("G_PA_A").vj) + Math.abs(aggregate("G_PA_B").vj);
+        const depreciationVJ = Math.abs(aggregate("G_AFA").vj);
+        const otherExpenseVJ = Math.abs(aggregate("G_SBA").vj);
+        const interestIncomeVJ = Math.abs(aggregate("G_ZE").vj);
+        const interestExpenseVJ = Math.abs(aggregate("G_ZA").vj);
+        const incomeTaxVJ = Math.abs(aggregate("G_ST").vj);
+        const otherTaxesVJ = Math.abs(aggregate("G_SST").vj);
+        const operatingResultVJ = revenueVJ + inventoryVJ + ownVJ + otherIncomeVJ - materialVJ - personnelVJ - depreciationVJ - otherExpenseVJ;
+        const ebtVJ = operatingResultVJ + interestIncomeVJ - interestExpenseVJ;
+        const afterTaxVJ = ebtVJ - incomeTaxVJ;
+        const formulaAnnualVJ = afterTaxVJ - otherTaxesVJ;
         const balanceTargetsComplete = [...assetTargets, ...liabilityTargets].every(target => aggregates[target]);
         const incomeTargetsComplete = [...incomeTargets].every(target => aggregates[target]);
         const check26 = identityBJ && identityVJ;
         const check61 = balanceTargetsComplete && check26 && noDeviations
           && closeEnough(metrics.balanceBJ, assetsBJ) && closeEnough(metrics.balanceVJ, assetsVJ);
-        const check62 = incomeTargetsComplete && noDeviations && closeEnough(formulaAnnualBJ, annualBJ)
+        const check62 = incomeTargetsComplete && noDeviations && closeEnough(formulaAnnualBJ, annualBJ) && closeEnough(formulaAnnualVJ, annualVJ)
           && closeEnough(metrics.revenueBJ, revenueBJ) && closeEnough(metrics.revenueVJ, revenueVJ)
           && closeEnough(metrics.ebtBJ, ebtBJ) && closeEnough(metrics.afterTaxBJ, afterTaxBJ);
 
-        return { inputOk, checks, sourceMetrics: { susaRows: susa.length, mappingRows: mapping.length, structureRows: structure.length }, results: [
+        return { inputOk, checks, sourceMetrics: { susaRows: susa.length, mappingRows: mapping.length, structureRows: structure.length }, financialKpis: {
+          balanceBJ: assetsBJ, balanceVJ: assetsVJ, revenueBJ, revenueVJ, ebtBJ, ebtVJ, afterTaxBJ, afterTaxVJ
+        }, results: [
           result("2.6", check26 ? "erledigt" : "offen", `Aktiva ${euro(assetsBJ)} / ${euro(assetsVJ)}; Passiva roh ${euro(liabilitiesBJ)} / ${euro(liabilitiesVJ)}; Jahresüberschuss ${euro(annualBJ)} / ${euro(annualVJ)}; Differenz jeweils ≤ 0,01 €.`, { assetsBJ, assetsVJ, liabilitiesBJ, liabilitiesVJ, annualBJ, annualVJ }),
           result("6.1", check61 ? "erledigt" : "offen", `Bilanzsumme BJ ${euro(assetsBJ)}, VJ ${euro(assetsVJ)}; alle Bilanzziele aggregiert und mit integrityCheck abgestimmt.`, { balanceBJ: assetsBJ, balanceVJ: assetsVJ, balanceTargets: assetTargets.size + liabilityTargets.size }),
-          result("6.2", check62 ? "erledigt" : "offen", `Umsatzerlöse BJ ${euro(revenueBJ)}, VJ ${euro(revenueVJ)}; EBT BJ ${euro(ebtBJ)}; Ergebnis nach Steuern BJ ${euro(afterTaxBJ)}; Jahresüberschuss BJ ${euro(annualBJ)}.`, { revenueBJ, revenueVJ, ebtBJ, afterTaxBJ, annualBJ })
+          result("6.2", check62 ? "erledigt" : "offen", `Umsatzerlöse BJ ${euro(revenueBJ)}, VJ ${euro(revenueVJ)}; EBT BJ/VJ ${euro(ebtBJ)} / ${euro(ebtVJ)}; Ergebnis nach Steuern BJ/VJ ${euro(afterTaxBJ)} / ${euro(afterTaxVJ)}.`, { revenueBJ, revenueVJ, ebtBJ, ebtVJ, afterTaxBJ, afterTaxVJ, annualBJ, annualVJ })
         ] };
       };
 
@@ -1510,6 +1626,7 @@
         if (id === "role-editor") document.getElementById("role-editor").scrollTop = 0;
         if (id === "assignment-admin") document.getElementById("assignment-admin").scrollTop = 0;
         if (id === "system-check") document.getElementById("system-check").scrollTop = 0;
+        if (id === "financial-overview") document.getElementById("financial-overview").scrollTop = 0;
       };
 
       const fillRoleForm = () => {
@@ -1541,8 +1658,15 @@
         if (currentPerson?.role === "adminRechteverwaltung") showView("system-check");
       });
 
+      document.getElementById("financial-overview-button").addEventListener("click", async () => {
+        showView("financial-overview");
+        await loadFinancialOverview();
+      });
+
       document.querySelector("[data-return-overview]").addEventListener("click", () => showView("overview"));
       document.querySelector("[data-system-return-overview]").addEventListener("click", () => showView("overview"));
+      document.querySelector("[data-financial-return-overview]").addEventListener("click", () => showView("overview"));
+      document.getElementById("financial-empty-system-check").addEventListener("click", () => showView("system-check"));
 
       document.getElementById("system-json-file").addEventListener("change", async event => {
         const file = event.target.files?.[0];

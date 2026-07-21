@@ -45,6 +45,19 @@ create table if not exists public.system_check_results (
   unique (run_id, nr)
 );
 
+create table if not exists public.financial_kpi_snapshots (
+  run_id bigint primary key references public.system_check_runs(id) on delete cascade,
+  balance_bj numeric not null,
+  balance_vj numeric not null,
+  revenue_bj numeric not null,
+  revenue_vj numeric not null,
+  ebt_bj numeric not null,
+  ebt_vj numeric not null,
+  after_tax_bj numeric not null,
+  after_tax_vj numeric not null,
+  created_at timestamptz not null default pg_catalog.now()
+);
+
 alter table public.measure_status add column if not exists system_check_run_id bigint;
 do $$
 begin
@@ -62,14 +75,18 @@ $$;
 
 alter table public.system_check_runs enable row level security;
 alter table public.system_check_results enable row level security;
-revoke all on public.system_check_runs, public.system_check_results from anon, authenticated;
-grant select on public.system_check_runs, public.system_check_results to authenticated;
+alter table public.financial_kpi_snapshots enable row level security;
+revoke all on public.system_check_runs, public.system_check_results, public.financial_kpi_snapshots from anon, authenticated;
+grant select on public.system_check_runs, public.system_check_results, public.financial_kpi_snapshots to authenticated;
 
 drop policy if exists "system_check_runs_read_authenticated" on public.system_check_runs;
 create policy "system_check_runs_read_authenticated" on public.system_check_runs
   for select to authenticated using (true);
 drop policy if exists "system_check_results_read_authenticated" on public.system_check_results;
 create policy "system_check_results_read_authenticated" on public.system_check_results
+  for select to authenticated using (true);
+drop policy if exists "financial_kpi_snapshots_read_authenticated" on public.financial_kpi_snapshots;
+create policy "financial_kpi_snapshots_read_authenticated" on public.financial_kpi_snapshots
   for select to authenticated using (true);
 
 create or replace function private.normalize_system_target(p_value text)
@@ -159,6 +176,21 @@ declare
   v_ebt_bj numeric;
   v_after_tax_bj numeric;
   v_formula_annual_bj numeric;
+  v_inventory_vj numeric;
+  v_own_vj numeric;
+  v_other_income_vj numeric;
+  v_material_vj numeric;
+  v_personnel_vj numeric;
+  v_depreciation_vj numeric;
+  v_other_expense_vj numeric;
+  v_interest_income_vj numeric;
+  v_interest_expense_vj numeric;
+  v_income_tax_vj numeric;
+  v_other_taxes_vj numeric;
+  v_operating_vj numeric;
+  v_ebt_vj numeric;
+  v_after_tax_vj numeric;
+  v_formula_annual_vj numeric;
   v_check_26 boolean;
   v_check_61 boolean;
   v_check_62 boolean;
@@ -282,19 +314,40 @@ begin
   v_ebt_bj := v_operating_bj+v_interest_income_bj-v_interest_expense_bj;
   v_after_tax_bj := v_ebt_bj-v_income_tax_bj;
   v_formula_annual_bj := v_after_tax_bj-v_other_taxes_bj;
+  v_inventory_vj := -coalesce((v_aggregates #>> '{G_BEST,vj}')::numeric,0);
+  v_own_vj := -coalesce((v_aggregates #>> '{G_AEL,vj}')::numeric,0);
+  v_other_income_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_SBE,vj}')::numeric,0));
+  v_material_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_MAT_A,vj}')::numeric,0))+pg_catalog.abs(coalesce((v_aggregates #>> '{G_MAT_B,vj}')::numeric,0));
+  v_personnel_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_PA_A,vj}')::numeric,0))+pg_catalog.abs(coalesce((v_aggregates #>> '{G_PA_B,vj}')::numeric,0));
+  v_depreciation_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_AFA,vj}')::numeric,0));
+  v_other_expense_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_SBA,vj}')::numeric,0));
+  v_interest_income_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_ZE,vj}')::numeric,0));
+  v_interest_expense_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_ZA,vj}')::numeric,0));
+  v_income_tax_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_ST,vj}')::numeric,0));
+  v_other_taxes_vj := pg_catalog.abs(coalesce((v_aggregates #>> '{G_SST,vj}')::numeric,0));
+  v_operating_vj := v_revenue_vj+v_inventory_vj+v_own_vj+v_other_income_vj-v_material_vj-v_personnel_vj-v_depreciation_vj-v_other_expense_vj;
+  v_ebt_vj := v_operating_vj+v_interest_income_vj-v_interest_expense_vj;
+  v_after_tax_vj := v_ebt_vj-v_income_tax_vj;
+  v_formula_annual_vj := v_after_tax_vj-v_other_taxes_vj;
   v_check_26 := v_identity_bj and v_identity_vj;
   v_check_61 := v_balance_complete and v_check_26 and v_no_deviations
     and pg_catalog.abs((v_metrics->>'balanceBJ')::numeric-v_assets_bj)<=0.01 and pg_catalog.abs((v_metrics->>'balanceVJ')::numeric-v_assets_vj)<=0.01;
-  v_check_62 := v_income_complete and v_no_deviations and pg_catalog.abs(v_formula_annual_bj-v_annual_bj)<=0.01
+  v_check_62 := v_income_complete and v_no_deviations and pg_catalog.abs(v_formula_annual_bj-v_annual_bj)<=0.01 and pg_catalog.abs(v_formula_annual_vj-v_annual_vj)<=0.01
     and pg_catalog.abs((v_metrics->>'revenueBJ')::numeric-v_revenue_bj)<=0.01 and pg_catalog.abs((v_metrics->>'revenueVJ')::numeric-v_revenue_vj)<=0.01
     and pg_catalog.abs((v_metrics->>'ebtBJ')::numeric-v_ebt_bj)<=0.01 and pg_catalog.abs((v_metrics->>'afterTaxBJ')::numeric-v_after_tax_bj)<=0.01;
 
   v_results := pg_catalog.jsonb_build_array(
     pg_catalog.jsonb_build_object('nr','2.6','status',case when v_check_26 then 'erledigt' else 'offen' end,'proof',pg_catalog.jsonb_build_object('assetsBJ',v_assets_bj,'assetsVJ',v_assets_vj,'liabilitiesBJ',v_liabilities_bj,'liabilitiesVJ',v_liabilities_vj,'annualBJ',v_annual_bj,'annualVJ',v_annual_vj)),
     pg_catalog.jsonb_build_object('nr','6.1','status',case when v_check_61 then 'erledigt' else 'offen' end,'proof',pg_catalog.jsonb_build_object('balanceBJ',v_assets_bj,'balanceVJ',v_assets_vj,'balanceTargets',private.system_jsonb_object_count(v_asset_targets)+private.system_jsonb_object_count(v_liability_targets))),
-    pg_catalog.jsonb_build_object('nr','6.2','status',case when v_check_62 then 'erledigt' else 'offen' end,'proof',pg_catalog.jsonb_build_object('revenueBJ',v_revenue_bj,'revenueVJ',v_revenue_vj,'ebtBJ',v_ebt_bj,'afterTaxBJ',v_after_tax_bj,'annualBJ',v_annual_bj))
+    pg_catalog.jsonb_build_object('nr','6.2','status',case when v_check_62 then 'erledigt' else 'offen' end,'proof',pg_catalog.jsonb_build_object('revenueBJ',v_revenue_bj,'revenueVJ',v_revenue_vj,'ebtBJ',v_ebt_bj,'ebtVJ',v_ebt_vj,'afterTaxBJ',v_after_tax_bj,'afterTaxVJ',v_after_tax_vj,'annualBJ',v_annual_bj,'annualVJ',v_annual_vj))
   );
-  return pg_catalog.jsonb_build_object('inputOk',true,'inputChecks',v_checks,'sourceMetrics',v_source_metrics,'results',v_results);
+  return pg_catalog.jsonb_build_object(
+    'inputOk',true,
+    'inputChecks',v_checks,
+    'sourceMetrics',v_source_metrics,
+    'financialKpis',pg_catalog.jsonb_build_object('balanceBJ',v_assets_bj,'balanceVJ',v_assets_vj,'revenueBJ',v_revenue_bj,'revenueVJ',v_revenue_vj,'ebtBJ',v_ebt_bj,'ebtVJ',v_ebt_vj,'afterTaxBJ',v_after_tax_bj,'afterTaxVJ',v_after_tax_vj),
+    'results',v_results
+  );
 exception when others then
   v_checks := pg_catalog.jsonb_build_array(
     pg_catalog.jsonb_build_object('label','Format und Version','ok',false,'detail','JSON-Struktur nicht auswertbar'),
@@ -324,6 +377,7 @@ as $$
 declare
   v_actor uuid := auth.uid();
   v_evaluation jsonb;
+  v_kpis jsonb;
   v_run_id bigint;
   v_result jsonb;
   v_previous text;
@@ -338,8 +392,21 @@ begin
   begin v_version := (p_payload->>'version')::integer; exception when others then v_version := null; end;
 
   insert into public.system_check_runs(exported_at,file_sha256,json_format,json_version,rule_version,source_metrics,input_checks,imported_by)
-  values(v_exported_at,p_file_sha256,p_payload->>'format',v_version,'core-json-check-v1',v_evaluation->'sourceMetrics',v_evaluation->'inputChecks',v_actor)
+  values(v_exported_at,p_file_sha256,p_payload->>'format',v_version,'core-json-check-v2',v_evaluation->'sourceMetrics',v_evaluation->'inputChecks',v_actor)
   returning id into v_run_id;
+
+  v_kpis := v_evaluation->'financialKpis';
+  if (v_evaluation->>'inputOk')::boolean and v_kpis is not null then
+    insert into public.financial_kpi_snapshots(
+      run_id,balance_bj,balance_vj,revenue_bj,revenue_vj,ebt_bj,ebt_vj,after_tax_bj,after_tax_vj
+    ) values (
+      v_run_id,
+      (v_kpis->>'balanceBJ')::numeric,(v_kpis->>'balanceVJ')::numeric,
+      (v_kpis->>'revenueBJ')::numeric,(v_kpis->>'revenueVJ')::numeric,
+      (v_kpis->>'ebtBJ')::numeric,(v_kpis->>'ebtVJ')::numeric,
+      (v_kpis->>'afterTaxBJ')::numeric,(v_kpis->>'afterTaxVJ')::numeric
+    );
+  end if;
 
   for v_result in select value from pg_catalog.jsonb_array_elements(v_evaluation->'results') loop
     select status into v_previous from public.measure_status where nr=v_result->>'nr' for update;
