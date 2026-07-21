@@ -197,16 +197,23 @@
     .overview-intro {
       scroll-snap-align: start;
       scroll-margin-top: 112px;
-      margin: 16px 16px 0;
-      padding: 17px 18px;
+      margin: 8px 12px 0;
+      padding: 12px 14px;
       border: 1px solid rgba(215,183,104,.24);
-      border-radius: 18px;
+      border-radius: 14px;
       background: var(--gold-soft);
       color: #d7d5cf;
-      font-size: 14px;
-      line-height: 1.5;
     }
-    .overview-intro strong { color: var(--text); }
+    .overview-greeting {
+      margin: 0;
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 12vw, 64px);
+      font-weight: 500;
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+    .overview-intro-copy { margin: 6px 0 0; color: #c4c5c9; font-size: 11px; line-height: 1.35; }
     .back {
       width: 40px;
       height: 40px;
@@ -217,40 +224,45 @@
       cursor: pointer;
       font-size: 20px;
     }
-    .steps { display: grid; gap: 12px; padding: 16px 16px max(30px, env(safe-area-inset-bottom)); }
+    .steps { display: grid; gap: 6px; padding: 8px 12px max(22px, env(safe-area-inset-bottom)); }
     .step-card {
       scroll-snap-align: start;
       scroll-margin-top: 112px;
       border: 1px solid var(--line);
-      border-radius: 22px;
+      border-radius: 14px;
       background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.027));
-      box-shadow: 0 18px 34px rgba(0,0,0,.16);
+      box-shadow: 0 10px 22px rgba(0,0,0,.13);
       overflow: hidden;
     }
     .step-summary, .measure-summary { list-style: none; cursor: pointer; }
     .step-summary::-webkit-details-marker, .measure-summary::-webkit-details-marker { display: none; }
-    .step-summary { padding: 18px; }
-    .step-top { display: grid; grid-template-columns: 38px 1fr 24px; gap: 13px; align-items: start; }
+    .step-summary { padding: 9px 11px; }
+    .step-top { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 18px; gap: 8px; align-items: center; }
     .step-number {
-      width: 38px;
-      height: 38px;
+      width: 30px;
+      height: 30px;
       display: grid;
       place-items: center;
       border: 1px solid rgba(215,183,104,.35);
-      border-radius: 12px;
+      border-radius: 9px;
       background: var(--gold-soft);
       color: var(--gold);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 800;
     }
-    .step-card h3 { margin: 1px 0 0; font-size: 17px; line-height: 1.28; letter-spacing: -.01em; }
-    .chevron { color: var(--muted); font-size: 20px; line-height: 38px; text-align: center; transition: transform .2s ease; }
+    .step-card h3 { margin: 0; font-size: 14px; line-height: 1.18; letter-spacing: -.01em; }
+    .chevron { color: var(--muted); font-size: 14px; line-height: 30px; text-align: center; transition: transform .2s ease; }
     .step-card[open] > .step-summary .step-chevron { transform: rotate(180deg); }
-    .step-progress { display: flex; align-items: baseline; gap: 3px; margin: 18px 0 0 51px; font-size: 22px; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .step-progress { display: flex; align-items: baseline; gap: 2px; margin: 0; font-size: 14px; font-weight: 850; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .progress-done { color: var(--green); }
     .progress-separator { color: var(--muted); }
     .progress-total { color: var(--orange); }
     .step-card[open] > .step-summary .step-progress { display: none; }
+    .step-card[open] > .step-summary { padding: 18px; }
+    .step-card[open] > .step-summary .step-top { grid-template-columns: 38px 1fr 24px; gap: 13px; align-items: start; }
+    .step-card[open] > .step-summary .step-number { width: 38px; height: 38px; border-radius: 12px; font-size: 13px; }
+    .step-card[open] > .step-summary h3 { margin-top: 1px; font-size: 17px; line-height: 1.28; }
+    .step-card[open] > .step-summary .chevron { font-size: 20px; line-height: 38px; }
     .metrics { display: none; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 22px; }
     .step-card[open] > .step-summary .metrics { display: grid; }
     .metric { min-width: 0; padding: 10px 5px 9px; border-radius: 12px; background: rgba(0,0,0,.2); text-align: center; }
@@ -365,7 +377,10 @@
             <button class="back" type="button" data-go="welcome" aria-label="Zurück zur Begrüßung">←</button>
           </div>
         </header>
-        <p class="overview-intro"><strong>Hallo <span id="overview-person-name">Volker</span>,</strong> hier sind die 10 Schritte zum erfolgreichen Jahresabschluss. Grün zeigt Dir die erledigten Aufgaben, Orange die Gesamtzahl je Schritt.</p>
+        <section class="overview-intro" aria-labelledby="overview-greeting">
+          <h3 class="overview-greeting" id="overview-greeting">Hallo <span id="overview-person-name">Volker</span></h3>
+          <p class="overview-intro-copy">Hier sind die 10 Schritte zum erfolgreichen Jahresabschluss. Grün zeigt Dir die erledigten Aufgaben, Orange die Gesamtzahl je Schritt.</p>
+        </section>
         <div class="steps" id="steps" aria-live="polite"></div>
         <p class="error" id="data-error" role="alert">Die Fixture-Daten konnten nicht gelesen werden.</p>
       </div>
@@ -658,10 +673,10 @@
               <div class="step-top">
                 <span class="step-number">${String(step.id).padStart(2, "0")}</span>
                 <h3>${step.name}</h3>
+                <div class="step-progress" aria-label="${done} von ${total} Aufgaben erledigt">
+                  <span class="progress-done">${done}</span><span class="progress-separator">/</span><span class="progress-total">${total}</span>
+                </div>
                 <span class="chevron step-chevron" aria-hidden="true">⌄</span>
-              </div>
-              <div class="step-progress" aria-label="${done} von ${total} Aufgaben erledigt">
-                <span class="progress-done">${done}</span><span class="progress-separator">/</span><span class="progress-total">${total}</span>
               </div>
               <div class="metrics">
                 ${metric("offen", open, "open")}
