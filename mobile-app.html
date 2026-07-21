@@ -61,13 +61,13 @@
       pointer-events: auto;
     }
 
-    .welcome, .questions, .role-editor {
+    .login, .welcome, .questions, .role-editor {
       min-height: 100%;
       padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
       display: flex;
       flex-direction: column;
     }
-    .welcome { justify-content: space-between; }
+    .login, .welcome { justify-content: space-between; }
     .brand {
       display: flex;
       align-items: center;
@@ -129,6 +129,50 @@
     .button-primary { border-color: var(--gold); background: var(--gold); color: #15120a; }
     .button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
+    .login-copy { max-width: 34ch; color: var(--muted); font-size: 15px; line-height: 1.5; }
+    .login-form { display: grid; gap: 11px; margin-top: 24px; }
+    .login-form label { color: #d6d7da; font-size: 13px; font-weight: 700; }
+    .login-form input {
+      width: 100%;
+      min-height: 54px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface-strong);
+      color: var(--text);
+    }
+    .login-form input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .login-form .button { width: 100%; }
+    .login-status { min-height: 44px; margin: 15px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .login-status.is-error { color: #ffd5d1; }
+    .login-logout { display: none; width: 100%; margin-top: 12px; }
+    .session-bar {
+      position: absolute;
+      z-index: 12;
+      top: max(12px, env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 8px 9px 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(17,19,25,.94);
+      box-shadow: 0 10px 28px rgba(0,0,0,.22);
+      backdrop-filter: blur(18px);
+    }
+    .app.is-authenticated .session-bar { display: flex; }
+    .session-person { min-width: 0; flex: 1; }
+    .session-name, .session-role { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .session-name { font-size: 13px; font-weight: 800; }
+    .session-role { margin-top: 2px; color: var(--gold); font-size: 10px; letter-spacing: .04em; }
+    .logout-button { width: 36px; height: 36px; flex: 0 0 36px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); cursor: pointer; }
+    .app.is-authenticated .welcome,
+    .app.is-authenticated .questions,
+    .app.is-authenticated .role-editor { padding-top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
+
     .overview {
       height: 100%;
       overflow-y: auto;
@@ -146,6 +190,7 @@
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(18px);
     }
+    .app.is-authenticated .overview-head { padding-top: max(78px, calc(env(safe-area-inset-top) + 67px)); }
     .head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .overview-head h2 { margin: 5px 0 0; font-size: 23px; letter-spacing: -.025em; }
     .meta { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
@@ -253,11 +298,35 @@
 </head>
 <body>
   <main class="app">
-    <section class="view welcome is-active" id="welcome" aria-labelledby="welcome-title">
+    <aside class="session-bar" id="session-bar" aria-label="Angemeldete Person">
+      <div class="session-person">
+        <span class="session-name" id="session-name"></span>
+        <span class="session-role" id="session-role"></span>
+      </div>
+      <button class="logout-button" id="logout-button" type="button" aria-label="Abmelden" title="Abmelden">↪</button>
+    </aside>
+
+    <section class="view login is-active" id="login" aria-labelledby="login-title">
+      <div class="brand"><span class="brand-mark">KK</span> KaiKira Gold</div>
+      <div>
+        <p class="eyebrow">Sicher anmelden</p>
+        <h1 id="login-title">Willkommen zurück</h1>
+        <p class="login-copy">Gib Deine hinterlegte E-Mail-Adresse ein. Wir senden Dir einen persönlichen Anmeldelink.</p>
+        <form class="login-form" id="login-form">
+          <label for="login-email">E-Mail-Adresse</label>
+          <input id="login-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@unternehmen.de">
+          <button class="button button-primary" id="send-link-button" type="submit">Link senden</button>
+        </form>
+        <p class="login-status" id="login-status" role="status" aria-live="polite">Anmeldung wird geprüft …</p>
+        <button class="button login-logout" id="login-logout-button" type="button">Abmelden</button>
+      </div>
+    </section>
+
+    <section class="view welcome" id="welcome" aria-labelledby="welcome-title">
       <div class="brand"><span class="brand-mark">KK</span> KaiKira Gold</div>
       <div>
         <p class="eyebrow">Jahresabschluss 2025</p>
-        <h1 id="welcome-title">Hallo Volker, schön Dich (wieder) zu sehen</h1>
+        <h1 id="welcome-title">Hallo <span id="welcome-person-name">Volker</span>, schön Dich (wieder) zu sehen</h1>
         <p class="question">Wollen wir am Jahresabschluss der Serafin GmbH 2025 weitermachen?</p>
         <div class="actions">
           <button class="button button-primary" type="button" data-go="overview">Ja</button>
@@ -335,9 +404,24 @@
   </main>
 
   <script type="application/json" id="fixture-data">{"format":"kaikira-project-state-display-fixture","version":1,"sourceFormat":"kaikira-project-state","sourceVersion":4,"values":{"unique::ph-7":"erledigt","unique::ph-12":"erledigt","unique::ph-14":"erledigt","unique::ph-15":"erledigt","unique::ph-16":"erledigt","unique::ph-18":"erledigt","unique::ph-20":"erledigt","unique::ph-21":"erledigt","unique::ph-22":"erledigt","unique::ph-26":"erledigt","unique::ph-27":"erledigt","unique::ph-28":"erledigt","unique::ph-29":"","unique::ph-34":"erledigt","unique::ph-35":"erledigt","unique::ph-36":"erledigt","unique::ph-37":"erledigt","unique::ph-38":"erledigt","unique::ph-40":"erledigt","unique::ph-42":"erledigt","unique::ph-43":"erledigt","unique::ph-44":"erledigt","unique::ph-45":"erledigt","unique::ph-46":"erledigt","unique::ph-47":"erledigt","unique::ph-48":"erledigt","unique::ph-50":"erledigt","unique::ph-51":"erledigt","unique::ph-55":"erledigt","unique::ph-56":"erledigt","unique::ph-58":"erledigt","unique::ph-59":"erledigt","unique::ph-60":"erledigt","unique::ph-62":"erledigt","unique::ph-63":"erledigt","unique::ph-65":"erledigt","unique::ph-66":"erledigt","unique::ph-67":"","unique::ph-68":"","unique::ph-69":"erledigt","unique::ph-70":"erledigt","unique::ph-71":"erledigt","unique::ph-72":"erledigt","unique::ph-73":"erledigt","unique::ph-74":"erledigt","unique::ph-75":"erledigt","unique::ph-76":"erledigt","unique::ph-77":"erledigt","unique::ph-78":"","unique::ph-79":"erledigt","unique::ph-81":"erledigt","unique::ph-83":"erledigt","unique::ph-84":"erledigt","unique::ph-85":"erledigt","unique::ph-86":"erledigt","unique::ph-88":"erledigt","unique::ph-89":"erledigt","unique::ph-91":"erledigt","unique::ph-92":"erledigt","unique::ph-93":"erledigt","unique::ph-94":"erledigt","unique::ph-95":"erledigt","unique::ph-96":"erledigt","unique::ph-97":"erledigt","unique::ph-98":"erledigt","unique::ph-99":"erledigt","unique::ph-100":"","unique::ph-101":"erledigt","unique::ph-102":"erledigt","unique::ph-103":"erledigt","unique::ph-104":"erledigt","unique::ph-105":"erledigt","unique::ph-106":"","unique::ph-107":"","unique::ph-108":"","unique::ph-109":"erledigt","unique::ph-110":"erledigt","unique::ph-111":"erledigt","unique::ph-112":"erledigt","unique::ph-113":"erledigt","unique::ph-114":"erledigt","unique::ph-115":"erledigt","unique::ph-116":"","unique::ph-117":"erledigt","unique::ph-118":"erledigt","unique::ph-119":"erledigt","unique::ph-120":"erledigt","unique::ph-121":"erledigt","unique::ph-122":"erledigt","unique::ph-123":"","unique::ph-124":"erledigt","unique::ph-125":"","unique::ph-126":"","unique::ph-127":"erledigt","unique::ph-128":"","unique::ph-129":"","unique::ph-130":"erledigt","unique::ph-131":"","unique::ph-132":"","unique::ph-133":"","unique::ph-134":"","unique::ph-135":"erledigt","unique::ph-136":"","unique::ph-137":"","unique::ph-138":"","unique::ph-139":"","unique::ph-140":"","unique::ph-141":"","unique::ph-142":"","unique::ph-143":"","unique::ph-144":"","unique::ph-145":"","unique::ph-146":"","unique::ph-147":"","unique::ph-148":"","unique::ph-149":"","unique::ph-150":"erledigt","unique::ph-151":"erledigt","unique::ph-152":"erledigt","unique::ph-153":"erledigt","unique::ph-154":"erledigt","unique::ph-155":"erledigt","unique::ph-156":"erledigt","unique::ph-157":"erledigt","unique::ph-158":"erledigt","unique::ph-159":"erledigt","unique::ph-160":"erledigt","unique::ph-161":"erledigt","unique::ph-162":"erledigt","unique::ph-163":"erledigt","unique::ph-164":"erledigt","unique::ph-165":"erledigt","unique::ph-166":"erledigt","unique::ph-167":"erledigt","unique::ph-168":"erledigt","unique::ph-169":"erledigt","unique::ph-170":"erledigt","unique::ph-171":"","unique::ph-172":"erledigt","unique::ph-173":"erledigt","unique::ph-174":"erledigt","unique::ph-175":"erledigt","unique::ph-176":"erledigt","unique::ph-177":"erledigt","unique::ph-178":"erledigt","unique::ph-179":"erledigt","unique::ph-180":"erledigt","unique::ph-181":"erledigt","unique::ph-182":"erledigt","unique::ph-183":"erledigt","unique::ph-184":"erledigt","unique::ph-185":"erledigt","unique::ph-186":"erledigt","unique::ph-187":"erledigt","unique::ph-188":"erledigt","unique::ph-189":"erledigt","unique::ph-190":"erledigt","unique::ph-191":"erledigt","unique::ph-192":"erledigt","unique::ph-193":"erledigt","unique::ph-195":"","unique::ph-196":"","unique::ph-197":"erledigt","unique::ph-198":"erledigt","unique::ph-199":"","unique::ph-200":"erledigt","unique::ph-201":"erledigt","unique::ph-202":"erledigt","unique::ph-203":"","unique::ph-204":"erledigt","unique::ph-205":"erledigt","unique::ph-206":"erledigt","unique::ph-207":"erledigt","unique::ph-208":"erledigt","unique::ph-209":"erledigt","unique::ph-210":"erledigt","unique::ph-212":"erledigt","unique::ph-213":"erledigt","unique::ph-214":"erledigt","unique::ph-215":"erledigt","unique::ph-216":"erledigt","unique::ph-217":"erledigt","unique::ph-218":"erledigt","unique::ph-219":"erledigt","unique::ph-220":"erledigt","unique::ph-221":"erledigt","unique::ph-222":"erledigt","unique::ph-223":"erledigt","unique::ph-224":"erledigt","unique::ph-225":"erledigt","unique::ph-226":"erledigt","unique::ph-227":"erledigt","unique::ph-228":"erledigt","unique::ph-229":"erledigt","unique::ph-230":"erledigt","unique::ph-231":"erledigt","unique::ph-232":"erledigt","unique::ph-233":"erledigt","unique::ph-235":"erledigt","unique::ph-236":"erledigt","unique::ph-237":"erledigt","unique::ph-244":"erledigt","unique::ph-245":"","unique::ph-246":"","unique::ph-247":"","unique::ph-248":"","unique::ph-249":"","unique::ph-250":"erledigt","unique::ph-251":"erledigt","unique::ph-252":"erledigt","unique::ph-253":"erledigt","unique::ph-254":"erledigt","unique::ph-255":"erledigt","unique::ph-256":"","unique::ph-257":"erledigt","unique::ph-258":"","unique::ph-259":"erledigt","unique::ph-260":"","unique::ph-261":"erledigt","unique::ph-262":"erledigt","unique::ph-263":"","unique::ph-264":"","unique::ph-265":"erledigt","unique::ph-266":"","unique::ph-267":"","unique::ph-268":"erledigt","unique::ph-269":"erledigt","unique::ph-270":"erledigt","unique::ph-271":"","unique::ph-275":"erledigt","unique::ph-276":"erledigt","unique::ph-279":"erledigt","unique::ph-281":"erledigt","unique::ph-282":"erledigt","unique::ph-283":"erledigt","unique::ph-284":"erledigt","unique::ph-285":"erledigt","unique::ph-286":"erledigt","unique::ph-287":"erledigt","unique::ph-288":"erledigt","unique::ph-289":"erledigt","unique::ph-290":"erledigt","unique::ph-291":"erledigt","unique::ph-292":"erledigt","unique::ph-293":"erledigt","unique::ph-294":"erledigt","unique::ph-295":"erledigt","unique::ph-296":"","unique::ph-297":"","unique::ph-298":"","unique::ph-301":"","unique::ph-302":"","unique::ph-305":"erledigt","unique::ph-306":"erledigt","unique::ph-308":"erledigt","unique::ph-312":"erledigt","unique::ph-314":"erledigt","unique::ph-316":"","unique::ph-317":"","unique::ph-318":"","unique::ph-319":"","unique::ph-320":"erledigt","unique::ph-322":"erledigt","unique::ph-323":"erledigt","unique::ph-324":"erledigt","unique::ph-325":"","unique::ph-326":"erledigt","unique::ph-327":"erledigt","unique::ph-328":"","unique::ph-329":"erledigt","unique::ph-330":"erledigt","unique::ph-331":"erledigt","unique::ph-332":"erledigt","unique::ph-333":"erledigt","unique::ph-334":"erledigt","unique::ph-335":"erledigt","unique::ph-336":"erledigt","unique::ph-337":"erledigt","unique::ph-338":"erledigt","unique::ph-339":"erledigt","unique::ph-340":"erledigt","unique::ph-341":"erledigt","unique::ph-342":"erledigt","unique::ph-343":"erledigt","unique::ph-344":"","unique::ph-345":"erledigt","unique::ph-346":"erledigt","unique::ph-348":"erledigt","unique::ph-349":"erledigt","unique::ph-350":"erledigt","unique::ph-351":"erledigt","unique::ph-352":"erledigt","unique::ph-353":"","unique::ph-354":"erledigt","unique::ph-355":"erledigt","unique::ph-356":"","unique::ph-357":"erledigt","unique::ph-358":"erledigt","unique::ph-359":"erledigt","unique::ph-360":"erledigt","unique::ph-361":"erledigt","unique::ph-362":"erledigt","unique::ph-363":"","unique::ph-364":"","unique::ph-365":"erledigt","unique::ph-366":"erledigt","unique::ph-367":"","unique::ph-368":"","unique::ph-369":"","unique::ph-370":"erledigt","unique::ph-371":"erledigt","unique::ph-372":"erledigt","unique::ph-373":"erledigt","unique::ph-374":"erledigt","unique::ph-375":"erledigt","unique::ph-376":"erledigt","unique::ph-377":"","unique::ph-378":"","unique::ph-379":"","unique::ph-380":"erledigt","unique::ph-381":"erledigt","unique::ph-383":"erledigt","unique::ph-384":"erledigt","unique::ph-385":"erledigt","unique::ph-386":"erledigt","unique::ph-387":"erledigt","unique::ph-388":"erledigt","unique::ph-389":"","unique::ph-390":"erledigt","unique::ph-391":"erledigt","unique::ph-392":"","unique::ph-393":"erledigt","unique::ph-394":"erledigt","unique::ph-396":"erledigt","unique::ph-397":"erledigt","unique::ph-398":"erledigt","unique::ph-399":"erledigt"},"corePresence":{"susa":true,"mapping":true,"structure":true}}</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (() => {
       "use strict";
+
+      const SUPABASE_URL = "https://eomekpaeehrobxqhwlkr.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbWVrcGFlZWhyb2J4cWh3bGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjI5MzAsImV4cCI6MjEwMDE5ODkzMH0.8RdlwnstRADuOUyHgF-cMJ180Tk8rWKM5UeXKTHh7hk";
+      const PRODUCTION_APP_URL = "https://kai-kira-mobile-app-gold.vercel.app/";
+      const peopleRoleLabels = {
+        projektleitung: "Projektleitung",
+        erstellerBilanzbuchhaltung: "Ersteller (Bilanzbuchhaltung)",
+        prueferInternReview: "Interner Prüfer/Review",
+        freigebendeGeschaeftsfuehrung: "Freigebende Geschäftsführung",
+        wirtschaftsprueferExtern: "Wirtschaftsprüfer (extern)",
+        adminRechteverwaltung: "Admin/Rechteverwaltung"
+      };
+      let supabaseClient;
+      let currentPerson = null;
 
       const processSteps = [
         { id: 1, name: "Projektstart & Planung", ranges: [[20,22],[55,79]] },
@@ -632,6 +716,131 @@
         updateRoleStatus();
         openStepOneMeasures();
       });
+
+      const app = document.querySelector(".app");
+      const loginForm = document.getElementById("login-form");
+      const loginStatus = document.getElementById("login-status");
+      const sendLinkButton = document.getElementById("send-link-button");
+      const loginLogoutButton = document.getElementById("login-logout-button");
+
+      const setLoginStatus = (message, isError = false) => {
+        loginStatus.textContent = message;
+        loginStatus.classList.toggle("is-error", isError);
+      };
+
+      const showLoggedOut = (message = "Bitte melde Dich mit Deiner hinterlegten E-Mail-Adresse an.") => {
+        currentPerson = null;
+        app.classList.remove("is-authenticated");
+        loginForm.style.display = "grid";
+        loginLogoutButton.style.display = "none";
+        sendLinkButton.disabled = false;
+        setLoginStatus(message);
+        showView("login");
+      };
+
+      const showPerson = person => {
+        currentPerson = person;
+        app.classList.add("is-authenticated");
+        document.getElementById("session-name").textContent = person.name;
+        document.getElementById("session-role").textContent = peopleRoleLabels[person.role] || person.role;
+        document.getElementById("welcome-person-name").textContent = person.name.trim().split(/\s+/)[0] || person.name;
+        if (document.querySelector(".view.is-active")?.id === "login") showView("welcome");
+      };
+
+      const applySession = async session => {
+        if (!session?.user) {
+          showLoggedOut();
+          return;
+        }
+
+        loginForm.style.display = "none";
+        loginLogoutButton.style.display = "block";
+        setLoginStatus("Berechtigung wird geprüft …");
+        showView("login");
+
+        const { data: person, error } = await supabaseClient
+          .from("people")
+          .select("id,email,role,name")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error(error);
+          setLoginStatus("Die Rolleninformation konnte nicht geladen werden. Bitte versuche es erneut.", true);
+          return;
+        }
+
+        if (!person) {
+          setLoginStatus("Für diese E-Mail ist noch keine Rolle hinterlegt. Bitte an den Admin wenden.", true);
+          return;
+        }
+
+        showPerson(person);
+      };
+
+      const signOut = async () => {
+        if (!supabaseClient) return;
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+          setLoginStatus("Abmelden war nicht möglich. Bitte versuche es erneut.", true);
+          showView("login");
+          return;
+        }
+        showLoggedOut("Du bist abgemeldet.");
+      };
+
+      loginForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const email = event.currentTarget.elements.namedItem("email").value.trim();
+        if (!email || !supabaseClient) return;
+
+        sendLinkButton.disabled = true;
+        setLoginStatus("Der persönliche Anmeldelink wird gesendet …");
+        const redirectTo = /^https?:$/.test(window.location.protocol)
+          ? `${window.location.origin}/`
+          : PRODUCTION_APP_URL;
+        const { error } = await supabaseClient.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: redirectTo,
+            shouldCreateUser: false
+          }
+        });
+        sendLinkButton.disabled = false;
+
+        if (error) {
+          console.error(error);
+          setLoginStatus("Der Link konnte nicht gesendet werden. Bitte prüfe die Adresse und versuche es erneut.", true);
+          return;
+        }
+
+        setLoginStatus("Wenn diese E-Mail freigeschaltet ist, wurde der Anmeldelink versendet. Bitte öffne ihn auf diesem Gerät.");
+      });
+
+      document.getElementById("logout-button").addEventListener("click", signOut);
+      loginLogoutButton.addEventListener("click", signOut);
+
+      const initializeAuth = async () => {
+        if (!window.supabase?.createClient) {
+          setLoginStatus("Der Anmeldedienst konnte nicht geladen werden. Bitte prüfe Deine Internetverbindung.", true);
+          return;
+        }
+
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) {
+          console.error(error);
+          showLoggedOut("Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.");
+        } else {
+          await applySession(data.session);
+        }
+
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          window.setTimeout(() => applySession(session), 0);
+        });
+      };
+
+      initializeAuth();
     })();
   </script>
 </body>
