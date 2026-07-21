@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090a0d">
+  <title>KaiKira Mobile Gold – Jahresabschluss 2025</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090a0d;
+      --surface: #111319;
+      --surface-strong: #171a21;
+      --line: rgba(255,255,255,.09);
+      --text: #f7f4ed;
+      --muted: #999da7;
+      --gold: #d7b768;
+      --gold-soft: rgba(215,183,104,.14);
+      --green: #70d6a7;
+      --red: #ff887f;
+      --orange: #f0bd70;
+      --shadow: 0 24px 64px rgba(0,0,0,.3);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); }
+    body {
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    button, textarea { font: inherit; }
+    button { color: inherit; }
+
+    .app {
+      position: relative;
+      height: 100dvh;
+      max-width: 560px;
+      margin: 0 auto;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 92% 5%, rgba(215,183,104,.13), transparent 28rem),
+        linear-gradient(180deg, #0c0d11 0%, #090a0d 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .view {
+      position: absolute;
+      inset: 0;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .28s ease, transform .28s ease, visibility .28s;
+      pointer-events: none;
+    }
+    .view.is-active {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .welcome, .questions {
+      min-height: 100%;
+      padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+    }
+    .welcome { justify-content: space-between; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(215,183,104,.42);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--gold-soft);
+      letter-spacing: 0;
+      font-size: 13px;
+    }
+    .eyebrow {
+      margin: 0 0 15px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    h1, h2, p { margin-top: 0; }
+    h1 {
+      max-width: 13ch;
+      margin-bottom: 24px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 12vw, 64px);
+      font-weight: 500;
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+    .question {
+      max-width: 33ch;
+      margin-bottom: 30px;
+      color: #c4c5c9;
+      font-size: clamp(18px, 5vw, 22px);
+      line-height: 1.45;
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .button {
+      min-height: 54px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      font-weight: 720;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease;
+    }
+    .button:active { transform: scale(.98); }
+    .button-primary { border-color: var(--gold); background: var(--gold); color: #15120a; }
+    .button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+    .overview {
+      height: 100%;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      scroll-snap-type: y proximity;
+      scrollbar-width: none;
+    }
+    .overview::-webkit-scrollbar { display: none; }
+    .overview-head {
+      position: sticky;
+      z-index: 4;
+      top: 0;
+      padding: max(21px, env(safe-area-inset-top)) 20px 17px;
+      background: linear-gradient(180deg, rgba(9,10,13,.99) 68%, rgba(9,10,13,.9));
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+    .head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .overview-head h2 { margin: 5px 0 0; font-size: 23px; letter-spacing: -.025em; }
+    .meta { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .back {
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(255,255,255,.04);
+      cursor: pointer;
+      font-size: 20px;
+    }
+    .steps { display: grid; gap: 12px; padding: 16px 16px max(30px, env(safe-area-inset-bottom)); }
+    .step-card {
+      min-height: 178px;
+      padding: 18px;
+      scroll-snap-align: start;
+      scroll-margin-top: 112px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.027));
+      box-shadow: 0 18px 34px rgba(0,0,0,.16);
+    }
+    .step-top { display: grid; grid-template-columns: 38px 1fr; gap: 13px; align-items: start; }
+    .step-number {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(215,183,104,.35);
+      border-radius: 12px;
+      background: var(--gold-soft);
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .step-card h3 { margin: 1px 0 0; font-size: 17px; line-height: 1.28; letter-spacing: -.01em; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 22px; }
+    .metric { min-width: 0; padding: 10px 5px 9px; border-radius: 12px; background: rgba(0,0,0,.2); text-align: center; }
+    .metric strong { display: block; margin-bottom: 5px; font-size: 19px; font-variant-numeric: tabular-nums; }
+    .metric span { display: block; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; text-transform: uppercase; letter-spacing: .04em; }
+    .metric-open strong { color: var(--gold); }
+    .metric-done strong { color: var(--green); }
+    .metric-blocked strong { color: var(--red); }
+    .metric-overdue strong { color: var(--orange); }
+
+    .questions { justify-content: center; }
+    .questions-inner { width: 100%; }
+    .questions h2 { max-width: 12ch; margin-bottom: 14px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(38px, 11vw, 54px); font-weight: 500; line-height: 1; letter-spacing: -.04em; }
+    .questions p { color: var(--muted); line-height: 1.5; }
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      margin: 12px 0 18px;
+      padding: 17px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface-strong);
+      color: var(--text);
+    }
+    textarea::placeholder { color: #70747d; }
+    .error { display: none; padding: 18px; color: #ffd5d1; line-height: 1.45; }
+
+    @media (min-width: 561px) {
+      body { background: #020203; }
+      .app { border-inline: 1px solid var(--line); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="view welcome is-active" id="welcome" aria-labelledby="welcome-title">
+      <div class="brand"><span class="brand-mark">KK</span> KaiKira Gold</div>
+      <div>
+        <p class="eyebrow">Jahresabschluss 2025</p>
+        <h1 id="welcome-title">Hallo Volker, schön Dich (wieder) zu sehen</h1>
+        <p class="question">Wollen wir am Jahresabschluss der Serafin GmbH 2025 weitermachen?</p>
+        <div class="actions">
+          <button class="button button-primary" type="button" data-go="overview">Ja</button>
+          <button class="button" type="button" data-go="questions">Nein</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="overview" aria-labelledby="overview-title">
+      <div class="overview">
+        <header class="overview-head">
+          <div class="head-row">
+            <div>
+              <p class="meta">Serafin GmbH · Abschluss 2025</p>
+              <h2 id="overview-title">10 Prozessschritte</h2>
+            </div>
+            <button class="back" type="button" data-go="welcome" aria-label="Zurück zur Begrüßung">←</button>
+          </div>
+        </header>
+        <div class="steps" id="steps" aria-live="polite"></div>
+        <p class="error" id="data-error" role="alert">Die Fixture-Daten konnten nicht gelesen werden.</p>
+      </div>
+    </section>
+
+    <section class="view questions" id="questions" aria-labelledby="questions-title">
+      <div class="questions-inner">
+        <p class="eyebrow">KaiKira Gold</p>
+        <h2 id="questions-title">Hast Du Fragen an mich?</h2>
+        <p>Notiere Deine Frage hier. Die Eingabe ist in diesem Schritt noch ohne Funktion.</p>
+        <label class="meta" for="question-input">Deine Frage</label>
+        <textarea id="question-input" placeholder="Schreib Deine Frage …"></textarea>
+        <button class="button" type="button" data-go="welcome">Zurück</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="application/json" id="fixture-data">{"format":"kaikira-project-state-display-fixture","version":1,"sourceFormat":"kaikira-project-state","sourceVersion":4,"values":{"unique::ph-7":"erledigt","unique::ph-12":"erledigt","unique::ph-14":"erledigt","unique::ph-15":"erledigt","unique::ph-16":"erledigt","unique::ph-18":"erledigt","unique::ph-20":"erledigt","unique::ph-21":"erledigt","unique::ph-22":"erledigt","unique::ph-26":"erledigt","unique::ph-27":"erledigt","unique::ph-28":"erledigt","unique::ph-29":"","unique::ph-34":"erledigt","unique::ph-35":"erledigt","unique::ph-36":"erledigt","unique::ph-37":"erledigt","unique::ph-38":"erledigt","unique::ph-40":"erledigt","unique::ph-42":"erledigt","unique::ph-43":"erledigt","unique::ph-44":"erledigt","unique::ph-45":"erledigt","unique::ph-46":"erledigt","unique::ph-47":"erledigt","unique::ph-48":"erledigt","unique::ph-50":"erledigt","unique::ph-51":"erledigt","unique::ph-55":"erledigt","unique::ph-56":"erledigt","unique::ph-58":"erledigt","unique::ph-59":"erledigt","unique::ph-60":"erledigt","unique::ph-62":"erledigt","unique::ph-63":"erledigt","unique::ph-65":"erledigt","unique::ph-66":"erledigt","unique::ph-67":"","unique::ph-68":"","unique::ph-69":"erledigt","unique::ph-70":"erledigt","unique::ph-71":"erledigt","unique::ph-72":"erledigt","unique::ph-73":"erledigt","unique::ph-74":"erledigt","unique::ph-75":"erledigt","unique::ph-76":"erledigt","unique::ph-77":"erledigt","unique::ph-78":"","unique::ph-79":"erledigt","unique::ph-81":"erledigt","unique::ph-83":"erledigt","unique::ph-84":"erledigt","unique::ph-85":"erledigt","unique::ph-86":"erledigt","unique::ph-88":"erledigt","unique::ph-89":"erledigt","unique::ph-91":"erledigt","unique::ph-92":"erledigt","unique::ph-93":"erledigt","unique::ph-94":"erledigt","unique::ph-95":"erledigt","unique::ph-96":"erledigt","unique::ph-97":"erledigt","unique::ph-98":"erledigt","unique::ph-99":"erledigt","unique::ph-100":"","unique::ph-101":"erledigt","unique::ph-102":"erledigt","unique::ph-103":"erledigt","unique::ph-104":"erledigt","unique::ph-105":"erledigt","unique::ph-106":"","unique::ph-107":"","unique::ph-108":"","unique::ph-109":"erledigt","unique::ph-110":"erledigt","unique::ph-111":"erledigt","unique::ph-112":"erledigt","unique::ph-113":"erledigt","unique::ph-114":"erledigt","unique::ph-115":"erledigt","unique::ph-116":"","unique::ph-117":"erledigt","unique::ph-118":"erledigt","unique::ph-119":"erledigt","unique::ph-120":"erledigt","unique::ph-121":"erledigt","unique::ph-122":"erledigt","unique::ph-123":"","unique::ph-124":"erledigt","unique::ph-125":"","unique::ph-126":"","unique::ph-127":"erledigt","unique::ph-128":"","unique::ph-129":"","unique::ph-130":"erledigt","unique::ph-131":"","unique::ph-132":"","unique::ph-133":"","unique::ph-134":"","unique::ph-135":"erledigt","unique::ph-136":"","unique::ph-137":"","unique::ph-138":"","unique::ph-139":"","unique::ph-140":"","unique::ph-141":"","unique::ph-142":"","unique::ph-143":"","unique::ph-144":"","unique::ph-145":"","unique::ph-146":"","unique::ph-147":"","unique::ph-148":"","unique::ph-149":"","unique::ph-150":"erledigt","unique::ph-151":"erledigt","unique::ph-152":"erledigt","unique::ph-153":"erledigt","unique::ph-154":"erledigt","unique::ph-155":"erledigt","unique::ph-156":"erledigt","unique::ph-157":"erledigt","unique::ph-158":"erledigt","unique::ph-159":"erledigt","unique::ph-160":"erledigt","unique::ph-161":"erledigt","unique::ph-162":"erledigt","unique::ph-163":"erledigt","unique::ph-164":"erledigt","unique::ph-165":"erledigt","unique::ph-166":"erledigt","unique::ph-167":"erledigt","unique::ph-168":"erledigt","unique::ph-169":"erledigt","unique::ph-170":"erledigt","unique::ph-171":"","unique::ph-172":"erledigt","unique::ph-173":"erledigt","unique::ph-174":"erledigt","unique::ph-175":"erledigt","unique::ph-176":"erledigt","unique::ph-177":"erledigt","unique::ph-178":"erledigt","unique::ph-179":"erledigt","unique::ph-180":"erledigt","unique::ph-181":"erledigt","unique::ph-182":"erledigt","unique::ph-183":"erledigt","unique::ph-184":"erledigt","unique::ph-185":"erledigt","unique::ph-186":"erledigt","unique::ph-187":"erledigt","unique::ph-188":"erledigt","unique::ph-189":"erledigt","unique::ph-190":"erledigt","unique::ph-191":"erledigt","unique::ph-192":"erledigt","unique::ph-193":"erledigt","unique::ph-195":"","unique::ph-196":"","unique::ph-197":"erledigt","unique::ph-198":"erledigt","unique::ph-199":"","unique::ph-200":"erledigt","unique::ph-201":"erledigt","unique::ph-202":"erledigt","unique::ph-203":"","unique::ph-204":"erledigt","unique::ph-205":"erledigt","unique::ph-206":"erledigt","unique::ph-207":"erledigt","unique::ph-208":"erledigt","unique::ph-209":"erledigt","unique::ph-210":"erledigt","unique::ph-212":"erledigt","unique::ph-213":"erledigt","unique::ph-214":"erledigt","unique::ph-215":"erledigt","unique::ph-216":"erledigt","unique::ph-217":"erledigt","unique::ph-218":"erledigt","unique::ph-219":"erledigt","unique::ph-220":"erledigt","unique::ph-221":"erledigt","unique::ph-222":"erledigt","unique::ph-223":"erledigt","unique::ph-224":"erledigt","unique::ph-225":"erledigt","unique::ph-226":"erledigt","unique::ph-227":"erledigt","unique::ph-228":"erledigt","unique::ph-229":"erledigt","unique::ph-230":"erledigt","unique::ph-231":"erledigt","unique::ph-232":"erledigt","unique::ph-233":"erledigt","unique::ph-235":"erledigt","unique::ph-236":"erledigt","unique::ph-237":"erledigt","unique::ph-244":"erledigt","unique::ph-245":"","unique::ph-246":"","unique::ph-247":"","unique::ph-248":"","unique::ph-249":"","unique::ph-250":"erledigt","unique::ph-251":"erledigt","unique::ph-252":"erledigt","unique::ph-253":"erledigt","unique::ph-254":"erledigt","unique::ph-255":"erledigt","unique::ph-256":"","unique::ph-257":"erledigt","unique::ph-258":"","unique::ph-259":"erledigt","unique::ph-260":"","unique::ph-261":"erledigt","unique::ph-262":"erledigt","unique::ph-263":"","unique::ph-264":"","unique::ph-265":"erledigt","unique::ph-266":"","unique::ph-267":"","unique::ph-268":"erledigt","unique::ph-269":"erledigt","unique::ph-270":"erledigt","unique::ph-271":"","unique::ph-275":"erledigt","unique::ph-276":"erledigt","unique::ph-279":"erledigt","unique::ph-281":"erledigt","unique::ph-282":"erledigt","unique::ph-283":"erledigt","unique::ph-284":"erledigt","unique::ph-285":"erledigt","unique::ph-286":"erledigt","unique::ph-287":"erledigt","unique::ph-288":"erledigt","unique::ph-289":"erledigt","unique::ph-290":"erledigt","unique::ph-291":"erledigt","unique::ph-292":"erledigt","unique::ph-293":"erledigt","unique::ph-294":"erledigt","unique::ph-295":"erledigt","unique::ph-296":"","unique::ph-297":"","unique::ph-298":"","unique::ph-301":"","unique::ph-302":"","unique::ph-305":"erledigt","unique::ph-306":"erledigt","unique::ph-308":"erledigt","unique::ph-312":"erledigt","unique::ph-314":"erledigt","unique::ph-316":"","unique::ph-317":"","unique::ph-318":"","unique::ph-319":"","unique::ph-320":"erledigt","unique::ph-322":"erledigt","unique::ph-323":"erledigt","unique::ph-324":"erledigt","unique::ph-325":"","unique::ph-326":"erledigt","unique::ph-327":"erledigt","unique::ph-328":"","unique::ph-329":"erledigt","unique::ph-330":"erledigt","unique::ph-331":"erledigt","unique::ph-332":"erledigt","unique::ph-333":"erledigt","unique::ph-334":"erledigt","unique::ph-335":"erledigt","unique::ph-336":"erledigt","unique::ph-337":"erledigt","unique::ph-338":"erledigt","unique::ph-339":"erledigt","unique::ph-340":"erledigt","unique::ph-341":"erledigt","unique::ph-342":"erledigt","unique::ph-343":"erledigt","unique::ph-344":"","unique::ph-345":"erledigt","unique::ph-346":"erledigt","unique::ph-348":"erledigt","unique::ph-349":"erledigt","unique::ph-350":"erledigt","unique::ph-351":"erledigt","unique::ph-352":"erledigt","unique::ph-353":"","unique::ph-354":"erledigt","unique::ph-355":"erledigt","unique::ph-356":"","unique::ph-357":"erledigt","unique::ph-358":"erledigt","unique::ph-359":"erledigt","unique::ph-360":"erledigt","unique::ph-361":"erledigt","unique::ph-362":"erledigt","unique::ph-363":"","unique::ph-364":"","unique::ph-365":"erledigt","unique::ph-366":"erledigt","unique::ph-367":"","unique::ph-368":"","unique::ph-369":"","unique::ph-370":"erledigt","unique::ph-371":"erledigt","unique::ph-372":"erledigt","unique::ph-373":"erledigt","unique::ph-374":"erledigt","unique::ph-375":"erledigt","unique::ph-376":"erledigt","unique::ph-377":"","unique::ph-378":"","unique::ph-379":"","unique::ph-380":"erledigt","unique::ph-381":"erledigt","unique::ph-383":"erledigt","unique::ph-384":"erledigt","unique::ph-385":"erledigt","unique::ph-386":"erledigt","unique::ph-387":"erledigt","unique::ph-388":"erledigt","unique::ph-389":"","unique::ph-390":"erledigt","unique::ph-391":"erledigt","unique::ph-392":"","unique::ph-393":"erledigt","unique::ph-394":"erledigt","unique::ph-396":"erledigt","unique::ph-397":"erledigt","unique::ph-398":"erledigt","unique::ph-399":"erledigt"},"corePresence":{"susa":true,"mapping":true,"structure":true}}</script>
+  <script>
+    (() => {
+      "use strict";
+
+      const processSteps = [
+        { id: 1, name: "Projektstart & Planung", ranges: [[20,22],[55,79]] },
+        { id: 2, name: "Datenübernahme & Erstprüfung", ranges: [[240,271],[297,306]] },
+        { id: 3, name: "Abschlussbuchungen & Abstimmungen", ranges: [[291,296],[307,328]] },
+        { id: 4, name: "Analytische Durchsicht", ranges: [[81,214]] },
+        { id: 5, name: "Nachweise & PBC", ranges: [[34,51],[215,233],[358,366],[370,378]] },
+        { id: 6, name: "Erstellung Jahresabschluss", ranges: [[7,18],[275,290],[329,357],[379,384]] },
+        { id: 7, name: "Prüfungsbegleitung", ranges: [[235,237],[367,369]] },
+        { id: 8, name: "Finalisierung & Freigabe", ranges: [[388,393]] },
+        { id: 9, name: "Offenlegung & Berichterstattung", ranges: [[26,29],[385,387],[394,399]] },
+        { id: 10, name: "Archivierung & Lessons Learned", ranges: [] }
+      ];
+
+      const isOpen = value => value == null ||
+        (typeof value === "string" && (value.trim() === "" || value.trim() === "Zusatzangabe erforderlich"));
+
+      const belongsToStep = (key, ranges) => {
+        const match = /^unique::ph-(\d+)$/.exec(key);
+        if (!match) return false;
+        const id = Number(match[1]);
+        return ranges.some(([from, to]) => id >= from && id <= to);
+      };
+
+      const metric = (label, value, modifier) => `
+        <div class="metric metric-${modifier}">
+          <strong>${value}</strong><span>${label}</span>
+        </div>`;
+
+      try {
+        const fixture = JSON.parse(document.getElementById("fixture-data").textContent);
+        if (fixture.format !== "kaikira-project-state-display-fixture") throw new Error("Unerwartetes Fixture-Format");
+
+        const values = fixture.values || {};
+        const uniqueEntries = Object.entries(values).filter(([key]) => /^unique::ph-\d+$/.test(key));
+        const stepOneBlocked = ["susa", "mapping", "structure"].some(key => fixture.corePresence?.[key] !== true) ? 1 : 0;
+
+        document.getElementById("steps").innerHTML = processSteps.map(step => {
+          const entries = uniqueEntries.filter(([key]) => belongsToStep(key, step.ranges));
+          const open = entries.filter(([, value]) => isOpen(value)).length;
+          const done = entries.length - open;
+          const blocked = step.id === 1 ? stepOneBlocked : 0;
+          const overdue = 0;
+
+          return `<article class="step-card" aria-label="Schritt ${step.id}: ${step.name}">
+            <div class="step-top">
+              <div class="step-number">${String(step.id).padStart(2, "0")}</div>
+              <h3>${step.name}</h3>
+            </div>
+            <div class="metrics">
+              ${metric("offen", open, "open")}
+              ${metric("erledigt", done, "done")}
+              ${metric("blockiert", blocked, "blocked")}
+              ${metric("überfällig", overdue, "overdue")}
+            </div>
+          </article>`;
+        }).join("");
+      } catch (error) {
+        document.getElementById("data-error").style.display = "block";
+        console.error(error);
+      }
+
+      const showView = id => {
+        document.querySelectorAll(".view").forEach(view => {
+          const active = view.id === id;
+          view.classList.toggle("is-active", active);
+          view.setAttribute("aria-hidden", String(!active));
+        });
+        if (id === "overview") document.querySelector(".overview").scrollTop = 0;
+      };
+
+      document.querySelectorAll("[data-go]").forEach(button => {
+        button.addEventListener("click", () => showView(button.dataset.go));
+      });
+    })();
+  </script>
+</body>
+</html>
