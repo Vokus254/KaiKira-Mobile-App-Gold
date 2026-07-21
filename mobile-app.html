@@ -612,7 +612,7 @@
             <button class="button" id="system-check-clear" type="button">Zurücksetzen</button>
           </div>
         </div>
-        <p class="system-source" id="system-source-info">Das vollständige JSON bleibt im Browser und wird nicht dauerhaft gespeichert.</p>
+        <p class="system-source" id="system-source-info">Bis zur Bestätigung bleibt das JSON im Browser. Bei der Übernahme wird es nur serverseitig nachgerechnet und nicht dauerhaft gespeichert.</p>
       </section>
       <section class="system-panel" id="system-input-panel" aria-labelledby="system-input-title" hidden>
         <h3 id="system-input-title">2. Acht Eingangskontrollen</h3>
@@ -1324,7 +1324,7 @@
         document.getElementById("system-json-paste").value = "";
         document.getElementById("system-input-panel").hidden = true;
         document.getElementById("system-preview-panel").hidden = true;
-        document.getElementById("system-source-info").textContent = "Das vollständige JSON bleibt im Browser und wird nicht dauerhaft gespeichert.";
+        document.getElementById("system-source-info").textContent = "Bis zur Bestätigung bleibt das JSON im Browser. Bei der Übernahme wird es nur serverseitig nachgerechnet und nicht dauerhaft gespeichert.";
       };
 
       const escapeHtml = value => String(value ?? "")
