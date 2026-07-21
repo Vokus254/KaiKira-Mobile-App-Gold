@@ -130,6 +130,29 @@
     .button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
     .login-copy { max-width: 34ch; color: var(--muted); font-size: 15px; line-height: 1.5; }
+    .login-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-top: 22px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+    }
+    .login-tab {
+      min-height: 42px;
+      padding: 9px 8px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .login-tab.is-active { background: var(--surface-strong); color: var(--text); box-shadow: 0 5px 15px rgba(0,0,0,.2); }
+    .login-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     .login-form { display: grid; gap: 11px; margin-top: 24px; }
     .login-form label { color: #d6d7da; font-size: 13px; font-weight: 700; }
     .login-form input {
@@ -143,6 +166,8 @@
     }
     .login-form input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     .login-form .button { width: 100%; }
+    .password-field { display: grid; gap: 11px; }
+    .password-field[hidden] { display: none; }
     .login-status { min-height: 44px; margin: 15px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
     .login-status.is-error { color: #ffd5d1; }
     .login-logout { display: none; width: 100%; margin-top: 12px; }
@@ -342,10 +367,18 @@
       <div>
         <p class="eyebrow">Sicher anmelden</p>
         <h1 id="login-title">Willkommen zurück</h1>
-        <p class="login-copy">Gib Deine hinterlegte E-Mail-Adresse ein. Wir senden Dir einen persönlichen Anmeldelink.</p>
+        <p class="login-copy" id="login-copy">Gib Deine hinterlegte E-Mail-Adresse ein. Wir senden Dir einen persönlichen Anmeldelink.</p>
+        <div class="login-tabs" role="tablist" aria-label="Anmeldeart">
+          <button class="login-tab is-active" id="link-login-tab" type="button" role="tab" aria-selected="true" data-login-mode="link">Mit Link anmelden</button>
+          <button class="login-tab" id="password-login-tab" type="button" role="tab" aria-selected="false" data-login-mode="password">Mit Passwort anmelden</button>
+        </div>
         <form class="login-form" id="login-form">
           <label for="login-email">E-Mail-Adresse</label>
           <input id="login-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@unternehmen.de">
+          <div class="password-field" id="password-field" hidden>
+            <label for="login-password">Passwort</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Passwort">
+          </div>
           <button class="button button-primary" id="send-link-button" type="submit">Link senden</button>
         </form>
         <p class="login-status" id="login-status" role="status" aria-live="polite">Anmeldung wird geprüft …</p>
@@ -764,10 +797,35 @@
       const loginStatus = document.getElementById("login-status");
       const sendLinkButton = document.getElementById("send-link-button");
       const loginLogoutButton = document.getElementById("login-logout-button");
+      const loginCopy = document.getElementById("login-copy");
+      const passwordField = document.getElementById("password-field");
+      const passwordInput = document.getElementById("login-password");
+      const loginTabs = [...document.querySelectorAll("[data-login-mode]")];
+      let loginMode = "link";
 
       const setLoginStatus = (message, isError = false) => {
         loginStatus.textContent = message;
         loginStatus.classList.toggle("is-error", isError);
+      };
+
+      const setLoginMode = mode => {
+        loginMode = mode === "password" ? "password" : "link";
+        const usesPassword = loginMode === "password";
+        passwordField.hidden = !usesPassword;
+        passwordInput.required = usesPassword;
+        if (!usesPassword) passwordInput.value = "";
+        sendLinkButton.textContent = usesPassword ? "Anmelden" : "Link senden";
+        loginCopy.textContent = usesPassword
+          ? "Melde Dich mit Deiner hinterlegten E-Mail-Adresse und Deinem Passwort an."
+          : "Gib Deine hinterlegte E-Mail-Adresse ein. Wir senden Dir einen persönlichen Anmeldelink.";
+        loginTabs.forEach(tab => {
+          const isActive = tab.dataset.loginMode === loginMode;
+          tab.classList.toggle("is-active", isActive);
+          tab.setAttribute("aria-selected", String(isActive));
+        });
+        setLoginStatus(usesPassword
+          ? "Bitte gib Deine E-Mail-Adresse und Dein Passwort ein."
+          : "Bitte melde Dich mit Deiner hinterlegten E-Mail-Adresse an.");
       };
 
       const showLoggedOut = (message = "Bitte melde Dich mit Deiner hinterlegten E-Mail-Adresse an.") => {
@@ -838,6 +896,29 @@
         if (!email || !supabaseClient) return;
 
         sendLinkButton.disabled = true;
+        if (loginMode === "password") {
+          const password = event.currentTarget.elements.namedItem("password").value;
+          if (!password) {
+            sendLinkButton.disabled = false;
+            setLoginStatus("Bitte gib Dein Passwort ein.", true);
+            return;
+          }
+
+          setLoginStatus("Du wirst angemeldet …");
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          sendLinkButton.disabled = false;
+
+          if (error) {
+            console.error(error);
+            setLoginStatus("E-Mail-Adresse oder Passwort ist nicht korrekt. Bitte versuche es erneut.", true);
+            return;
+          }
+
+          passwordInput.value = "";
+          setLoginStatus("Anmeldung erfolgreich. Deine Berechtigung wird geprüft …");
+          return;
+        }
+
         setLoginStatus("Der persönliche Anmeldelink wird gesendet …");
         const redirectTo = /^https?:$/.test(window.location.protocol)
           ? `${window.location.origin}/`
@@ -859,6 +940,8 @@
 
         setLoginStatus("Wenn diese E-Mail freigeschaltet ist, wurde der Anmeldelink versendet. Bitte öffne ihn auf diesem Gerät.");
       });
+
+      loginTabs.forEach(tab => tab.addEventListener("click", () => setLoginMode(tab.dataset.loginMode)));
 
       document.getElementById("logout-button").addEventListener("click", signOut);
       loginLogoutButton.addEventListener("click", signOut);
