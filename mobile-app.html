@@ -222,7 +222,7 @@
     }
     .app.is-authenticated .overview-head { padding-top: max(78px, calc(env(safe-area-inset-top) + 67px)); }
     .head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-    .head-actions { display: flex; align-items: center; gap: 8px; }
+    .head-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
     .admin-launch { min-height: 38px; padding: 9px 11px; border: 1px solid rgba(215,183,104,.32); border-radius: 12px; background: var(--gold-soft); color: #ead277; font-size: 11px; font-weight: 800; cursor: pointer; }
     .admin-launch[hidden] { display: none; }
     .overview-head h2 { margin: 5px 0 0; font-size: 23px; letter-spacing: -.025em; }
@@ -532,7 +532,7 @@
               <h2 id="overview-title">10 Prozessschritte</h2>
             </div>
             <div class="head-actions">
-              <button class="admin-launch" id="financial-overview-button" type="button">Finanzübersicht</button>
+              <button class="admin-launch" id="financial-overview-button" type="button" aria-label="Finanzübersicht öffnen">Finanzen</button>
               <button class="admin-launch" id="system-check-button" type="button" hidden>System-Check</button>
               <button class="admin-launch" id="assignment-admin-button" type="button" hidden>Maßnahmen zuweisen</button>
               <button class="back" type="button" data-go="welcome" aria-label="Zurück zur Begrüßung">←</button>
