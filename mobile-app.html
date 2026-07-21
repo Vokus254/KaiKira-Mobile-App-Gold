@@ -194,6 +194,19 @@
     .head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .overview-head h2 { margin: 5px 0 0; font-size: 23px; letter-spacing: -.025em; }
     .meta { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .overview-intro {
+      scroll-snap-align: start;
+      scroll-margin-top: 112px;
+      margin: 16px 16px 0;
+      padding: 17px 18px;
+      border: 1px solid rgba(215,183,104,.24);
+      border-radius: 18px;
+      background: var(--gold-soft);
+      color: #d7d5cf;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .overview-intro strong { color: var(--text); }
     .back {
       width: 40px;
       height: 40px;
@@ -216,7 +229,7 @@
     }
     .step-summary, .measure-summary { list-style: none; cursor: pointer; }
     .step-summary::-webkit-details-marker, .measure-summary::-webkit-details-marker { display: none; }
-    .step-summary { min-height: 178px; padding: 18px; }
+    .step-summary { padding: 18px; }
     .step-top { display: grid; grid-template-columns: 38px 1fr 24px; gap: 13px; align-items: start; }
     .step-number {
       width: 38px;
@@ -233,7 +246,13 @@
     .step-card h3 { margin: 1px 0 0; font-size: 17px; line-height: 1.28; letter-spacing: -.01em; }
     .chevron { color: var(--muted); font-size: 20px; line-height: 38px; text-align: center; transition: transform .2s ease; }
     .step-card[open] > .step-summary .step-chevron { transform: rotate(180deg); }
-    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 22px; }
+    .step-progress { display: flex; align-items: baseline; gap: 3px; margin: 18px 0 0 51px; font-size: 22px; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .progress-done { color: var(--green); }
+    .progress-separator { color: var(--muted); }
+    .progress-total { color: var(--orange); }
+    .step-card[open] > .step-summary .step-progress { display: none; }
+    .metrics { display: none; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 22px; }
+    .step-card[open] > .step-summary .metrics { display: grid; }
     .metric { min-width: 0; padding: 10px 5px 9px; border-radius: 12px; background: rgba(0,0,0,.2); text-align: center; }
     .metric strong { display: block; margin-bottom: 5px; font-size: 19px; font-variant-numeric: tabular-nums; }
     .metric span { display: block; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; text-transform: uppercase; letter-spacing: .04em; }
@@ -346,6 +365,7 @@
             <button class="back" type="button" data-go="welcome" aria-label="Zurück zur Begrüßung">←</button>
           </div>
         </header>
+        <p class="overview-intro"><strong>Hallo <span id="overview-person-name">Volker</span>,</strong> hier sind die 10 Schritte zum erfolgreichen Jahresabschluss. Grün zeigt Dir die erledigten Aufgaben, Orange die Gesamtzahl je Schritt.</p>
         <div class="steps" id="steps" aria-live="polite"></div>
         <p class="error" id="data-error" role="alert">Die Fixture-Daten konnten nicht gelesen werden.</p>
       </div>
@@ -631,6 +651,7 @@
           const done = entries.length - open;
           const blocked = step.id === 1 ? stepOneBlocked : 0;
           const overdue = 0;
+          const total = open + done + blocked + overdue;
 
           return `<details class="step-card">
             <summary class="step-summary" aria-label="Schritt ${step.id}: ${step.name}">
@@ -638,6 +659,9 @@
                 <span class="step-number">${String(step.id).padStart(2, "0")}</span>
                 <h3>${step.name}</h3>
                 <span class="chevron step-chevron" aria-hidden="true">⌄</span>
+              </div>
+              <div class="step-progress" aria-label="${done} von ${total} Aufgaben erledigt">
+                <span class="progress-done">${done}</span><span class="progress-separator">/</span><span class="progress-total">${total}</span>
               </div>
               <div class="metrics">
                 ${metric("offen", open, "open")}
@@ -692,7 +716,10 @@
       };
 
       document.querySelectorAll("[data-go]").forEach(button => {
-        button.addEventListener("click", () => showView(button.dataset.go));
+        button.addEventListener("click", () => {
+          button.blur();
+          showView(button.dataset.go);
+        });
       });
 
       document.querySelector("[data-edit-roles]").addEventListener("click", () => {
@@ -744,6 +771,7 @@
         document.getElementById("session-name").textContent = person.name;
         document.getElementById("session-role").textContent = peopleRoleLabels[person.role] || person.role;
         document.getElementById("welcome-person-name").textContent = person.name.trim().split(/\s+/)[0] || person.name;
+        document.getElementById("overview-person-name").textContent = person.name.trim().split(/\s+/)[0] || person.name;
         if (document.querySelector(".view.is-active")?.id === "login") showView("welcome");
       };
 
