@@ -309,10 +309,10 @@
     .metric-overdue strong { color: var(--orange); }
     .step-content { padding: 0 18px 18px; }
     .measure-accordion { border-top: 1px solid var(--line); }
-    .measure-summary { display: grid; grid-template-columns: 1fr auto 24px; align-items: center; gap: 9px; padding: 17px 0 0; font-size: 13px; font-weight: 750; }
+    .measure-summary { display: none; grid-template-columns: 1fr auto 24px; align-items: center; gap: 9px; padding: 17px 0 0; font-size: 13px; font-weight: 750; }
     .measure-count { padding: 4px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); font-size: 11px; font-variant-numeric: tabular-nums; }
     .measure-accordion[open] .measure-chevron { transform: rotate(180deg); }
-    .measure-list { margin: 15px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
+    .measure-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
     .measure-item { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: start; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
     .measure-item + .measure-item { border-top: 1px solid var(--line); }
     .measure-number { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -956,7 +956,7 @@
       };
 
       const measureList = measures => `
-        <details class="measure-accordion">
+        <details class="measure-accordion" open>
           <summary class="measure-summary">
             <span>Maßnahmen</span>
             <span class="measure-count">${measures.length}</span>
