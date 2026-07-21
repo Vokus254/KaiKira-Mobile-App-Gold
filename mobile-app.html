@@ -61,7 +61,7 @@
       pointer-events: auto;
     }
 
-    .login, .welcome, .questions, .role-editor {
+    .login, .password-setup, .welcome, .questions, .role-editor {
       min-height: 100%;
       padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
       display: flex;
@@ -195,6 +195,7 @@
     .session-role { margin-top: 2px; color: var(--gold); font-size: 10px; letter-spacing: .04em; }
     .logout-button { width: 36px; height: 36px; flex: 0 0 36px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); cursor: pointer; }
     .app.is-authenticated .welcome,
+    .app.is-authenticated .password-setup,
     .app.is-authenticated .questions,
     .app.is-authenticated .role-editor { padding-top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
 
@@ -386,6 +387,23 @@
       </div>
     </section>
 
+    <section class="view password-setup" id="password-setup" aria-labelledby="password-setup-title">
+      <div class="brand"><span class="brand-mark">KK</span> KaiKira Gold</div>
+      <div>
+        <p class="eyebrow">Einmalige Einrichtung</p>
+        <h1 id="password-setup-title">Passwort festlegen</h1>
+        <p class="login-copy">Lege jetzt Dein persönliches Passwort fest. Danach kannst Du Dich wahlweise mit Passwort oder Magic Link anmelden.</p>
+        <form class="login-form" id="password-setup-form">
+          <label for="new-password">Neues Passwort</label>
+          <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Mindestens 8 Zeichen">
+          <label for="confirm-password">Passwort wiederholen</label>
+          <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Passwort erneut eingeben">
+          <button class="button button-primary" id="save-password-button" type="submit">Passwort speichern</button>
+        </form>
+        <p class="login-status" id="password-setup-status" role="status" aria-live="polite">Das Passwort wird ausschließlich sicher an Supabase übertragen.</p>
+      </div>
+    </section>
+
     <section class="view welcome" id="welcome" aria-labelledby="welcome-title">
       <div class="brand"><span class="brand-mark">KK</span> KaiKira Gold</div>
       <div>
@@ -490,6 +508,7 @@
       };
       let supabaseClient;
       let currentPerson = null;
+      let activeSession = null;
 
       const processSteps = [
         { id: 1, name: "Projektstart & Planung", ranges: [[20,22],[55,79]] },
@@ -801,6 +820,9 @@
       const passwordField = document.getElementById("password-field");
       const passwordInput = document.getElementById("login-password");
       const loginTabs = [...document.querySelectorAll("[data-login-mode]")];
+      const passwordSetupForm = document.getElementById("password-setup-form");
+      const passwordSetupStatus = document.getElementById("password-setup-status");
+      const savePasswordButton = document.getElementById("save-password-button");
       let loginMode = "link";
 
       const setLoginStatus = (message, isError = false) => {
@@ -830,7 +852,9 @@
 
       const showLoggedOut = (message = "Bitte melde Dich mit Deiner hinterlegten E-Mail-Adresse an.") => {
         currentPerson = null;
+        activeSession = null;
         app.classList.remove("is-authenticated");
+        passwordSetupForm.reset();
         loginForm.style.display = "grid";
         loginLogoutButton.style.display = "none";
         sendLinkButton.disabled = false;
@@ -838,14 +862,14 @@
         showView("login");
       };
 
-      const showPerson = person => {
+      const showPerson = (person, nextView = "welcome") => {
         currentPerson = person;
         app.classList.add("is-authenticated");
         document.getElementById("session-name").textContent = person.name;
         document.getElementById("session-role").textContent = peopleRoleLabels[person.role] || person.role;
         document.getElementById("welcome-person-name").textContent = person.name.trim().split(/\s+/)[0] || person.name;
         document.getElementById("overview-person-name").textContent = person.name.trim().split(/\s+/)[0] || person.name;
-        if (document.querySelector(".view.is-active")?.id === "login") showView("welcome");
+        if (document.querySelector(".view.is-active")?.id === "login") showView(nextView);
       };
 
       const applySession = async session => {
@@ -853,6 +877,8 @@
           showLoggedOut();
           return;
         }
+
+        activeSession = session;
 
         loginForm.style.display = "none";
         loginLogoutButton.style.display = "block";
@@ -876,8 +902,48 @@
           return;
         }
 
-        showPerson(person);
+        const needsPasswordSetup = session.user.user_metadata?.password_setup_completed !== true;
+        showPerson(person, needsPasswordSetup ? "password-setup" : "welcome");
       };
+
+      passwordSetupForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!supabaseClient || !activeSession?.user) return;
+
+        const newPassword = event.currentTarget.elements.namedItem("newPassword").value;
+        const confirmPassword = event.currentTarget.elements.namedItem("confirmPassword").value;
+        if (newPassword.length < 8) {
+          passwordSetupStatus.textContent = "Das Passwort muss mindestens 8 Zeichen lang sein.";
+          passwordSetupStatus.classList.add("is-error");
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          passwordSetupStatus.textContent = "Die beiden Passwörter stimmen nicht überein.";
+          passwordSetupStatus.classList.add("is-error");
+          return;
+        }
+
+        savePasswordButton.disabled = true;
+        passwordSetupStatus.classList.remove("is-error");
+        passwordSetupStatus.textContent = "Dein Passwort wird sicher gespeichert …";
+        const { data, error } = await supabaseClient.auth.updateUser({
+          password: newPassword,
+          data: { password_setup_completed: true }
+        });
+        savePasswordButton.disabled = false;
+        passwordSetupForm.reset();
+
+        if (error || !data.user) {
+          console.error(error);
+          passwordSetupStatus.textContent = "Das Passwort konnte nicht gespeichert werden. Bitte versuche es erneut.";
+          passwordSetupStatus.classList.add("is-error");
+          return;
+        }
+
+        activeSession = { ...activeSession, user: data.user };
+        passwordSetupStatus.textContent = "Passwort gespeichert. Du kannst die App jetzt verwenden.";
+        showView("welcome");
+      });
 
       const signOut = async () => {
         if (!supabaseClient) return;
