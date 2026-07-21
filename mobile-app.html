@@ -1153,8 +1153,9 @@
           return;
         }
 
-        const needsPasswordSetup = session.user.user_metadata?.password_setup_completed !== true;
-        showPerson(person, needsPasswordSetup ? "password-setup" : "welcome");
+        // Die Konten werden vom Admin inklusive Passwort vorab in Supabase angelegt.
+        // Ein fehlendes Client-Metadatenfeld darf deshalb keinen zweiten Setup-Zwang auslösen.
+        showPerson(person, "welcome");
         await loadMeasureStatuses();
       };
 
