@@ -30,7 +30,7 @@
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
     }
-    button, textarea { font: inherit; }
+    button, input, textarea { font: inherit; }
     button { color: inherit; }
 
     .app {
@@ -61,7 +61,7 @@
       pointer-events: auto;
     }
 
-    .welcome, .questions {
+    .welcome, .questions, .role-editor {
       min-height: 100%;
       padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
       display: flex;
@@ -205,6 +205,12 @@
     .measure-item { display: grid; grid-template-columns: 54px 1fr; gap: 10px; padding: 13px 12px; background: rgba(0,0,0,.16); font-size: 13px; line-height: 1.38; }
     .measure-item + .measure-item { border-top: 1px solid var(--line); }
     .measure-number { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
+    .measure-item-editable { padding: 0; }
+    .measure-edit-button { width: 100%; display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 13px 12px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+    .measure-edit-button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+    .measure-status { padding: 4px 7px; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .measure-status-open { background: var(--gold-soft); color: var(--gold); }
+    .measure-status-done { background: rgba(112,214,167,.14); color: var(--green); }
 
     .questions { justify-content: center; }
     .questions-inner { width: 100%; }
@@ -222,6 +228,18 @@
       color: var(--text);
     }
     textarea::placeholder { color: #70747d; }
+    .role-editor { display: block; overflow-y: auto; }
+    .role-editor-head { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; margin-bottom: 24px; }
+    .role-editor h2 { margin: 5px 0 7px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 10vw, 48px); font-weight: 500; line-height: 1; letter-spacing: -.04em; }
+    .role-editor-copy { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .roles-form { display: grid; gap: 15px; }
+    .role-field { display: grid; gap: 7px; }
+    .role-field label { color: #d6d7da; font-size: 13px; font-weight: 700; }
+    .role-field input { width: 100%; min-height: 50px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); color: var(--text); }
+    .role-field input::placeholder { color: #6f737c; }
+    .role-field input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .save-row { padding-top: 7px; padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+    .save-row .button { width: 100%; }
     .error { display: none; padding: 18px; color: #ffd5d1; line-height: 1.45; }
 
     @media (min-width: 561px) {
@@ -273,6 +291,46 @@
         <textarea id="question-input" placeholder="Schreib Deine Frage …"></textarea>
         <button class="button" type="button" data-go="welcome">Zurück</button>
       </div>
+    </section>
+
+    <section class="view role-editor" id="role-editor" aria-labelledby="role-editor-title">
+      <div class="role-editor-head">
+        <button class="back" type="button" data-return-measures aria-label="Zurück zu den Maßnahmen">←</button>
+        <div>
+          <p class="eyebrow">Maßnahme 1.2 bearbeiten</p>
+          <h2 id="role-editor-title">Rollen und Verantwortlichkeiten definieren</h2>
+          <p class="role-editor-copy">Eine Person oder ein Team pro Rolle.</p>
+        </div>
+      </div>
+      <form class="roles-form" id="roles-form">
+        <div class="role-field">
+          <label for="role-projektleitung">1. Projektleitung</label>
+          <input id="role-projektleitung" name="projektleitung" type="text" placeholder="Name oder Team" autocomplete="off">
+        </div>
+        <div class="role-field">
+          <label for="role-ersteller">2. Ersteller (Bilanzbuchhaltung)</label>
+          <input id="role-ersteller" name="erstellerBilanzbuchhaltung" type="text" placeholder="Name oder Team" autocomplete="off">
+        </div>
+        <div class="role-field">
+          <label for="role-pruefer-intern">3. Interner Prüfer/Review</label>
+          <input id="role-pruefer-intern" name="prueferInternReview" type="text" placeholder="Name oder Team" autocomplete="off">
+        </div>
+        <div class="role-field">
+          <label for="role-freigabe">4. Freigebende Geschäftsführung</label>
+          <input id="role-freigabe" name="freigebendeGeschaeftsfuehrung" type="text" placeholder="Name oder Team" autocomplete="off">
+        </div>
+        <div class="role-field">
+          <label for="role-wirtschaftspruefer">5. Wirtschaftsprüfer (extern)</label>
+          <input id="role-wirtschaftspruefer" name="wirtschaftsprueferExtern" type="text" placeholder="Name oder Team" autocomplete="off">
+        </div>
+        <div class="role-field">
+          <label for="role-admin">6. Admin/Rechteverwaltung</label>
+          <input id="role-admin" name="adminRechteverwaltung" type="text" placeholder="Name oder Team" autocomplete="off">
+        </div>
+        <div class="save-row">
+          <button class="button button-primary" type="submit">Speichern</button>
+        </div>
+      </form>
     </section>
   </main>
 
@@ -411,6 +469,31 @@
         ]
       };
 
+      const ROLE_STORAGE_KEY = "kaikira-mobile-gold.project-extension.v1";
+      const roleKeys = [
+        "projektleitung",
+        "erstellerBilanzbuchhaltung",
+        "prueferInternReview",
+        "freigebendeGeschaeftsfuehrung",
+        "wirtschaftsprueferExtern",
+        "adminRechteverwaltung"
+      ];
+      const emptyRoles = () => Object.fromEntries(roleKeys.map(key => [key, ""]));
+      const readProjectStateExtension = () => {
+        try {
+          const stored = JSON.parse(localStorage.getItem(ROLE_STORAGE_KEY) || "null");
+          const roles = emptyRoles();
+          roleKeys.forEach(key => {
+            if (typeof stored?.roles?.[key] === "string") roles[key] = stored.roles[key];
+          });
+          return { roles };
+        } catch {
+          return { roles: emptyRoles() };
+        }
+      };
+      let projectStateExtension = readProjectStateExtension();
+      const rolesAreComplete = () => roleKeys.every(key => projectStateExtension.roles[key].trim().length > 0);
+
       const isOpen = value => value == null ||
         (typeof value === "string" && (value.trim() === "" || value.trim() === "Zusatzangabe erforderlich"));
 
@@ -426,6 +509,15 @@
           <strong>${value}</strong><span>${label}</span>
         </div>`;
 
+      const roleStatus = () => rolesAreComplete() ? "erledigt" : "offen";
+      const roleMeasure = (number, title) => `<li class="measure-item measure-item-editable">
+        <button class="measure-edit-button" type="button" data-edit-roles>
+          <span class="measure-number">${number}</span>
+          <span>${title}</span>
+          <span class="measure-status ${rolesAreComplete() ? "measure-status-done" : "measure-status-open"}" data-role-status>${roleStatus()}</span>
+        </button>
+      </li>`;
+
       const measureList = measures => `
         <details class="measure-accordion">
           <summary class="measure-summary">
@@ -434,7 +526,7 @@
             <span class="chevron measure-chevron" aria-hidden="true">⌄</span>
           </summary>
           <ol class="measure-list">
-            ${measures.map(([number, title]) => `<li class="measure-item">
+            ${measures.map(([number, title]) => number === "1.2" ? roleMeasure(number, title) : `<li class="measure-item">
               <span class="measure-number">${number}</span>
               <span>${title}</span>
             </li>`).join("")}
@@ -487,10 +579,58 @@
           view.setAttribute("aria-hidden", String(!active));
         });
         if (id === "overview") document.querySelector(".overview").scrollTop = 0;
+        if (id === "role-editor") document.getElementById("role-editor").scrollTop = 0;
+      };
+
+      const fillRoleForm = () => {
+        const form = document.getElementById("roles-form");
+        roleKeys.forEach(key => {
+          form.elements.namedItem(key).value = projectStateExtension.roles[key];
+        });
+      };
+
+      const updateRoleStatus = () => {
+        document.querySelectorAll("[data-role-status]").forEach(status => {
+          const complete = rolesAreComplete();
+          status.textContent = complete ? "erledigt" : "offen";
+          status.classList.toggle("measure-status-done", complete);
+          status.classList.toggle("measure-status-open", !complete);
+        });
+      };
+
+      const openStepOneMeasures = () => {
+        showView("overview");
+        const stepOne = document.querySelector('summary[aria-label="Schritt 1: Projektstart & Planung"]')?.closest("details.step-card");
+        if (!stepOne) return;
+        stepOne.open = true;
+        stepOne.querySelector(".measure-accordion").open = true;
+        requestAnimationFrame(() => stepOne.scrollIntoView({ block: "start" }));
       };
 
       document.querySelectorAll("[data-go]").forEach(button => {
         button.addEventListener("click", () => showView(button.dataset.go));
+      });
+
+      document.querySelector("[data-edit-roles]").addEventListener("click", () => {
+        fillRoleForm();
+        showView("role-editor");
+      });
+
+      document.querySelector("[data-return-measures]").addEventListener("click", openStepOneMeasures);
+
+      document.getElementById("roles-form").addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        projectStateExtension = {
+          roles: Object.fromEntries(roleKeys.map(key => [key, form.elements.namedItem(key).value.trim()]))
+        };
+        try {
+          localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(projectStateExtension));
+        } catch {
+          // Die Daten bleiben für die laufende Sitzung im klar benannten Objekt verfügbar.
+        }
+        updateRoleStatus();
+        openStepOneMeasures();
       });
     })();
   </script>
