@@ -425,13 +425,32 @@
     .statement-tab { min-height: 38px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
     .statement-tab.is-active { background: var(--gold-soft); color: #f0d67a; box-shadow: inset 0 0 0 1px rgba(215,183,104,.24); }
     .statement-table { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.022); }
-    .statement-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(92px,.48fr) minmax(92px,.48fr); align-items: center; min-height: 42px; border-bottom: 1px solid rgba(255,255,255,.07); }
-    .statement-row:last-child { border-bottom: 0; }
-    .statement-row.is-heading { background: rgba(215,183,104,.07); font-weight: 800; }
-    .statement-cell { min-width: 0; padding: 9px 8px; font-size: 11px; line-height: 1.3; }
-    .statement-label { padding-left: calc(8px + (var(--statement-depth, 1) - 1) * 10px); overflow-wrap: anywhere; }
+    .statement-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(82px,.44fr) minmax(82px,.44fr) 14px; align-items: center; min-height: 42px; }
+    .statement-cell { min-width: 0; padding: 9px 6px; font-size: 10px; line-height: 1.3; }
+    .statement-label { padding-left: 8px; overflow-wrap: anywhere; }
     .statement-number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .statement-column-head { min-height: 34px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .statement-column-head { min-height: 34px; border-bottom: 1px solid rgba(255,255,255,.08); color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .statement-tree { padding: 3px; }
+    .statement-node { border-bottom: 1px solid rgba(255,255,255,.065); }
+    .statement-node:last-child { border-bottom: 0; }
+    .statement-node > summary { list-style: none; cursor: pointer; }
+    .statement-node > summary::-webkit-details-marker { display: none; }
+    .statement-node > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 8px; }
+    .statement-node > summary .statement-row { background: rgba(215,183,104,.035); font-weight: 750; }
+    .statement-node[open] > summary .statement-row { background: rgba(215,183,104,.09); }
+    .statement-chevron { color: var(--muted); font-size: 12px; transition: transform .18s ease; }
+    .statement-node[open] > summary .statement-chevron { transform: rotate(90deg); }
+    .statement-children { margin-left: 8px; border-left: 1px solid rgba(215,183,104,.18); }
+    .statement-accounts { padding: 7px 5px 9px 9px; overflow-x: auto; }
+    .statement-account-state { margin: 4px 0; padding: 9px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .statement-account-state.is-error { color: #ffd5d1; }
+    .statement-account-table { min-width: 330px; }
+    .statement-account-row { display: grid; grid-template-columns: 58px minmax(90px,1fr) 82px 82px; align-items: start; border-top: 1px solid rgba(255,255,255,.055); }
+    .statement-account-row:first-child { border-top: 0; }
+    .statement-account-cell { min-width: 0; padding: 7px 5px; color: #d5d6da; font-size: 9px; line-height: 1.35; overflow-wrap: anywhere; }
+    .statement-account-row.is-head .statement-account-cell { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .statement-account-number { color: #e6cc70; font-variant-numeric: tabular-nums; }
+    .statement-account-amount { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .statement-validation { margin: 10px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
 
     .questions { justify-content: center; }
@@ -1261,19 +1280,90 @@
 
       let currentStatementSnapshot = null;
       let currentStatementKind = "balance";
+      const statementAccountCache = new Map();
+      const statementAccountLoads = new Map();
+      const formatStatementNumber = value => new Intl.NumberFormat("de-DE", {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+      }).format(Number(value));
+      const renderStatementAccountList = (container, accounts) => {
+        container.innerHTML = `<div class="statement-account-table">
+          <div class="statement-account-row is-head">
+            <span class="statement-account-cell">Konto</span><span class="statement-account-cell">Bezeichnung</span>
+            <span class="statement-account-cell statement-account-amount">BJ</span><span class="statement-account-cell statement-account-amount">VJ</span>
+          </div>
+          ${accounts.map(account => `<div class="statement-account-row" data-account-no="${escapeHtml(account.account_no)}">
+            <span class="statement-account-cell statement-account-number">${escapeHtml(account.account_no)}</span>
+            <span class="statement-account-cell">${escapeHtml(account.account_name)}</span>
+            <span class="statement-account-cell statement-account-amount">${escapeHtml(formatStatementNumber(account.bj))}</span>
+            <span class="statement-account-cell statement-account-amount">${escapeHtml(formatStatementNumber(account.vj))}</span>
+          </div>`).join("")}
+        </div>`;
+      };
+      const loadStatementAccounts = async details => {
+        if (!details.open || !currentStatementSnapshot) return;
+        const positionId = details.dataset.positionId;
+        const runId = currentStatementSnapshot.run_id;
+        const cacheKey = `${runId}::${positionId}`;
+        const container = details.querySelector(":scope > .statement-accounts");
+        if (!container) return;
+        if (statementAccountCache.has(cacheKey)) {
+          renderStatementAccountList(container, statementAccountCache.get(cacheKey));
+          return;
+        }
+        if (statementAccountLoads.has(cacheKey)) {
+          await statementAccountLoads.get(cacheKey);
+          if (statementAccountCache.has(cacheKey)) renderStatementAccountList(container, statementAccountCache.get(cacheKey));
+          return;
+        }
+        container.innerHTML = '<p class="statement-account-state">Konten werden geladen …</p>';
+        const request = Promise.resolve(supabaseClient.from("financial_statement_accounts")
+          .select("account_no,account_name,bj,vj,source_index")
+          .eq("run_id", runId).eq("position_id", positionId)
+          .order("source_index", { ascending: true }));
+        statementAccountLoads.set(cacheKey, request);
+        const { data, error } = await request;
+        statementAccountLoads.delete(cacheKey);
+        if (error) {
+          console.error(error);
+          container.innerHTML = '<p class="statement-account-state is-error">Die Konten konnten nicht geladen werden. Bitte das Blatt schließen und erneut öffnen.</p>';
+          return;
+        }
+        const accounts = Array.isArray(data) ? data : [];
+        statementAccountCache.set(cacheKey, accounts);
+        renderStatementAccountList(container, accounts);
+      };
       const renderStatementRows = () => {
         const rows = currentStatementKind === "balance"
           ? currentStatementSnapshot?.balance_positions
           : currentStatementSnapshot?.income_statement_positions;
         const table = document.getElementById("financial-statements-table");
-        const safeRows = Array.isArray(rows) ? rows : [];
+        const safeRows = Array.isArray(rows) ? [...rows].sort((left, right) => Number(left.sortIndex) - Number(right.sortIndex)) : [];
+        const childrenByParent = new Map();
+        safeRows.forEach(row => {
+          const parentId = row.parentId || null;
+          if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
+          childrenByParent.get(parentId).push(row);
+        });
+        const renderNode = row => {
+          const children = childrenByParent.get(row.positionId) || [];
+          const inner = row.isLeaf
+            ? `<div class="statement-accounts"><p class="statement-account-state">${Number(row.accountCount || 0).toLocaleString("de-DE")} Konten – beim Öffnen dieses Blatts laden</p></div>`
+            : `<div class="statement-children">${children.map(renderNode).join("")}</div>`;
+          return `<details class="statement-node" data-position-id="${escapeHtml(row.positionId)}" data-statement-leaf="${row.isLeaf ? "true" : "false"}">
+            <summary aria-label="${escapeHtml(row.label)} auf- oder zuklappen"><span class="statement-row">
+              <span class="statement-cell statement-label">${escapeHtml(row.label)}</span>
+              <span class="statement-cell statement-number">${escapeHtml(formatFinancialAmount(row.bj))}</span>
+              <span class="statement-cell statement-number">${escapeHtml(formatFinancialAmount(row.vj))}</span>
+              <span class="statement-chevron" aria-hidden="true">›</span>
+            </span></summary>${inner}
+          </details>`;
+        };
         table.innerHTML = `<div class="statement-row statement-column-head">
-          <span class="statement-cell">Berichtsposition</span><span class="statement-cell statement-number">BJ</span><span class="statement-cell statement-number">VJ</span>
-        </div>` + safeRows.map(row => `<div class="statement-row${row.isLeaf ? "" : " is-heading"}" data-position-id="${escapeHtml(row.positionId)}">
-          <span class="statement-cell statement-label" style="--statement-depth:${Number(row.depth) || 1}">${escapeHtml(row.label)}</span>
-          <span class="statement-cell statement-number">${escapeHtml(formatFinancialAmount(row.bj))}</span>
-          <span class="statement-cell statement-number">${escapeHtml(formatFinancialAmount(row.vj))}</span>
-        </div>`).join("");
+          <span class="statement-cell">Berichtsposition</span><span class="statement-cell statement-number">BJ</span><span class="statement-cell statement-number">VJ</span><span></span>
+        </div><div class="statement-tree">${(childrenByParent.get(null) || []).map(renderNode).join("")}</div>`;
+        table.querySelectorAll('[data-statement-leaf="true"]').forEach(details => {
+          details.addEventListener("toggle", () => loadStatementAccounts(details));
+        });
         document.querySelectorAll("[data-statement-kind]").forEach(button => {
           const active = button.dataset.statementKind === currentStatementKind;
           button.classList.toggle("is-active", active);
@@ -1281,6 +1371,10 @@
         });
       };
       const renderFinancialStatements = (snapshot, exportedAt) => {
+        if (currentStatementSnapshot?.run_id !== snapshot.run_id) {
+          statementAccountCache.clear();
+          statementAccountLoads.clear();
+        }
         currentStatementSnapshot = snapshot;
         currentStatementKind = "balance";
         renderStatementRows();
@@ -1290,7 +1384,7 @@
           : "Stand: letzter bestätigter Core-JSON-Import ohne Exportzeitstempel";
         const validation = snapshot.validation || {};
         document.getElementById("financial-statements-validation").textContent =
-          `${Number(validation.resolvedAccounts || 0).toLocaleString("de-DE")} Konten eindeutig aufgelöst · ${Number(validation.balancePositionCount || 0).toLocaleString("de-DE")} Bilanzpositionen · ${Number(validation.incomePositionCount || 0).toLocaleString("de-DE")} GuV-Positionen · Regel ${escapeHtml(validation.ruleVersion || "core-hierarchy-v1")}`;
+          `${Number(validation.resolvedAccounts || 0).toLocaleString("de-DE")} Konten eindeutig aufgelöst · ${Number(validation.balancePositionCount || 0).toLocaleString("de-DE")} Bilanzpositionen · ${Number(validation.incomePositionCount || 0).toLocaleString("de-DE")} GuV-Positionen · Regel ${escapeHtml(validation.ruleVersion || "core-hierarchy-v2")}`;
         document.getElementById("financial-statements-content").hidden = false;
         document.getElementById("financial-statements-empty").hidden = true;
       };
@@ -1439,14 +1533,15 @@
           balancePositions,
           incomeStatementPositions,
           validation: {
-            ruleVersion: "core-hierarchy-v1",
+            ruleVersion: "core-hierarchy-v2",
             structureRows: rows.length,
             resolvedAccounts,
             unresolvedAccounts,
             ambiguousAccounts,
             duplicateExactPaths,
             balancePositionCount: balancePositions.length,
-            incomePositionCount: incomeStatementPositions.length
+            incomePositionCount: incomeStatementPositions.length,
+            accountRowCount: resolvedAccounts
           }
         };
       };

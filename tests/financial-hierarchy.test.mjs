@@ -33,6 +33,7 @@ for (const row of structure) {
 }
 const susaByAccount = new Map(susa.map(row => [account(row.konto), row]));
 let unresolved = 0;
+const resolvedAccountRows = [];
 for (const mapRow of mapping) {
   let resolved = exact.get(pathKey(mapRow.levels, mapRow.ziel));
   if (!resolved) {
@@ -49,6 +50,10 @@ for (const mapRow of mapping) {
   const parts = resolved.levels.filter(Boolean);
   const top = norm(parts[0]);
   const kind = top.includes("bilanz") ? "balance" : "income";
+  resolvedAccountRows.push({
+    positionId: `${kind}:${prefixKey(parts, parts.length)}##`,
+    accountNo: account(source.konto), accountName: source.bezeichnung, bj: source.bj, vj: source.vj
+  });
   for (let depth = 1; depth <= parts.length; depth += 1) {
     const row = positions[kind].get(prefixKey(parts, depth));
     row.bj += source.bj;
@@ -58,12 +63,19 @@ for (const mapRow of mapping) {
 }
 assert.equal(unresolved, 0, "all mapping rows must resolve exactly like core.html");
 assert.equal(mapping.length, 1431);
+assert.equal(resolvedAccountRows.length, 1431, "every validated SuSa row must produce one account row");
 const balance = order.balance.map(key => positions.balance.get(key));
 const income = order.income.map(key => positions.income.get(key));
 assert.equal(balance[0].label, "1. Bilanz");
 assert.equal(income[0].label, "2. GuV");
 assert.ok(Math.abs(balance[0].bj - 2124859.83) <= 0.01, "raw balance root must equal the signed annual-result difference");
 assert.ok(Math.abs(income[0].bj + 2124859.83) <= 0.01, "raw P&L root must be the inverse annual result");
+
+const mediumPositionId = "balance:1 bilanz||1 aktiva||1 anlagevermogen||2 sachanlagen||einrichtungen und ausstattungen||einrichtungen und ausstattungen##";
+const mediumAccounts = resolvedAccountRows.filter(row => row.positionId === mediumPositionId);
+assert.equal(mediumAccounts.length, 10);
+assert.ok(Math.abs(mediumAccounts.reduce((sum,row) => sum + row.bj, 0) - 4795239.20) <= 0.01);
+assert.ok(Math.abs(mediumAccounts.reduce((sum,row) => sum + row.vj, 0) - 6098764.54) <= 0.01);
 
 const anomalies = structure.filter(row => /dummy|test|platzhalter/i.test(row.levels.join(" ") + " " + row.ziel));
 console.log(JSON.stringify({
@@ -72,5 +84,6 @@ console.log(JSON.stringify({
   incomePositionCount: income.length,
   balanceTop: balance.filter(row => row.depth <= 2),
   incomeTop: income.filter(row => row.depth <= 2),
+  mediumLeaf: { positionId: mediumPositionId, accounts: mediumAccounts },
   suspiciousStructureLabels: anomalies
 }, null, 2));

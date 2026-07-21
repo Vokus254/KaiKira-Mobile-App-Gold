@@ -11,12 +11,30 @@ create table if not exists public.financial_statement_snapshots (
   created_at timestamptz not null default pg_catalog.now()
 );
 
+create table if not exists public.financial_statement_accounts (
+  run_id bigint not null references public.financial_statement_snapshots(run_id) on delete cascade,
+  position_id text not null,
+  account_no text not null,
+  account_name text not null,
+  bj numeric not null,
+  vj numeric not null,
+  source_index integer not null check (source_index > 0),
+  primary key (run_id, position_id, account_no)
+);
+
+create index if not exists financial_statement_accounts_leaf_idx
+  on public.financial_statement_accounts(run_id, position_id, source_index);
+
 alter table public.financial_statement_snapshots enable row level security;
-revoke all on public.financial_statement_snapshots from anon, authenticated;
-grant select on public.financial_statement_snapshots to authenticated;
+alter table public.financial_statement_accounts enable row level security;
+revoke all on public.financial_statement_snapshots, public.financial_statement_accounts from anon, authenticated;
+grant select on public.financial_statement_snapshots, public.financial_statement_accounts to authenticated;
 
 drop policy if exists "financial_statement_snapshots_read_authenticated" on public.financial_statement_snapshots;
 create policy "financial_statement_snapshots_read_authenticated" on public.financial_statement_snapshots
+  for select to authenticated using (true);
+drop policy if exists "financial_statement_accounts_read_authenticated" on public.financial_statement_accounts;
+create policy "financial_statement_accounts_read_authenticated" on public.financial_statement_accounts
   for select to authenticated using (true);
 
 create or replace function private.normalize_system_label(p_value text)
@@ -78,6 +96,7 @@ declare
   v_income_order jsonb := '[]'::jsonb;
   v_balance_positions jsonb := '[]'::jsonb;
   v_income_positions jsonb := '[]'::jsonb;
+  v_accounts jsonb := '[]'::jsonb;
   v_row jsonb;
   v_candidate jsonb;
   v_candidates jsonb;
@@ -107,7 +126,10 @@ declare
   v_income_sort integer := 0;
   v_ok boolean;
 begin
-  for v_row in select value from pg_catalog.jsonb_array_elements(v_susa) loop
+  for v_row in
+    select value || pg_catalog.jsonb_build_object('_sourceIndex',ordinality)
+    from pg_catalog.jsonb_array_elements(v_susa) with ordinality
+  loop
     v_account := private.normalize_system_account(v_row->>'konto');
     v_susa_by_account := v_susa_by_account || pg_catalog.jsonb_build_object(v_account, v_row);
   end loop;
@@ -220,6 +242,15 @@ begin
     end if;
     v_resolved_count := v_resolved_count + 1;
     v_depth_count := pg_catalog.jsonb_array_length(v_parts);
+    v_key := private.system_path_key(v_parts,'');
+    v_accounts := v_accounts || pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object(
+      'positionId',v_kind||':'||v_key,
+      'accountNo',v_account,
+      'accountName',coalesce(v_source->>'bezeichnung',''),
+      'bj',v_bj,
+      'vj',v_vj,
+      'sourceIndex',(v_source->>'_sourceIndex')::integer
+    ));
     for v_depth in 1..v_depth_count loop
       v_key := private.system_path_key(private.system_level_prefix(v_parts,v_depth),'');
       v_position := case when v_kind='balance' then v_balance_map->v_key else v_income_map->v_key end;
@@ -249,16 +280,18 @@ begin
 
   v_ok := v_duplicate_count=0 and v_unresolved_count=0 and v_ambiguous_count=0
     and v_resolved_count=pg_catalog.jsonb_array_length(v_mapping)
+    and pg_catalog.jsonb_array_length(v_accounts)=v_resolved_count
     and pg_catalog.jsonb_array_length(v_balance_positions)>0 and pg_catalog.jsonb_array_length(v_income_positions)>0;
   return pg_catalog.jsonb_build_object(
     'ok',v_ok,
     'balancePositions',v_balance_positions,
     'incomeStatementPositions',v_income_positions,
+    'accounts',v_accounts,
     'validation',pg_catalog.jsonb_build_object(
-      'ruleVersion','core-hierarchy-v1','structureRows',pg_catalog.jsonb_array_length(v_structure),
+      'ruleVersion','core-hierarchy-v2','structureRows',pg_catalog.jsonb_array_length(v_structure),
       'resolvedAccounts',v_resolved_count,'unresolvedAccounts',v_unresolved_count,'ambiguousAccounts',v_ambiguous_count,
       'duplicateExactPaths',v_duplicate_count,'balancePositionCount',pg_catalog.jsonb_array_length(v_balance_positions),
-      'incomePositionCount',pg_catalog.jsonb_array_length(v_income_positions)
+      'incomePositionCount',pg_catalog.jsonb_array_length(v_income_positions),'accountRowCount',pg_catalog.jsonb_array_length(v_accounts)
     )
   );
 end;
@@ -312,6 +345,7 @@ declare
   v_evaluation jsonb;
   v_kpis jsonb;
   v_statements jsonb;
+  v_accounts jsonb;
   v_run_id bigint;
   v_result jsonb;
   v_previous text;
@@ -326,11 +360,12 @@ begin
   begin v_version := (p_payload->>'version')::integer; exception when others then v_version := null; end;
 
   insert into public.system_check_runs(exported_at,file_sha256,json_format,json_version,rule_version,source_metrics,input_checks,imported_by)
-  values(v_exported_at,p_file_sha256,p_payload->>'format',v_version,'core-json-check-v3',v_evaluation->'sourceMetrics',v_evaluation->'inputChecks',v_actor)
+  values(v_exported_at,p_file_sha256,p_payload->>'format',v_version,'core-json-check-v4',v_evaluation->'sourceMetrics',v_evaluation->'inputChecks',v_actor)
   returning id into v_run_id;
 
   v_kpis := v_evaluation->'financialKpis';
   v_statements := v_evaluation->'financialStatements';
+  v_accounts := v_statements->'accounts';
   if (v_evaluation->>'inputOk')::boolean and v_kpis is not null and coalesce((v_statements->>'ok')::boolean,false) then
     insert into public.financial_kpi_snapshots(
       run_id,balance_bj,balance_vj,revenue_bj,revenue_vj,ebt_bj,ebt_vj,after_tax_bj,after_tax_vj
@@ -342,6 +377,10 @@ begin
     );
     insert into public.financial_statement_snapshots(run_id,balance_positions,income_statement_positions,validation)
     values(v_run_id,v_statements->'balancePositions',v_statements->'incomeStatementPositions',v_statements->'validation');
+    insert into public.financial_statement_accounts(run_id,position_id,account_no,account_name,bj,vj,source_index)
+    select v_run_id,a->>'positionId',a->>'accountNo',a->>'accountName',
+      (a->>'bj')::numeric,(a->>'vj')::numeric,(a->>'sourceIndex')::integer
+    from pg_catalog.jsonb_array_elements(v_accounts) a;
   end if;
 
   for v_result in select value from pg_catalog.jsonb_array_elements(v_evaluation->'results') loop
@@ -350,7 +389,7 @@ begin
     values(v_run_id,v_result->>'nr',v_previous,v_result->>'status',v_result->'proof');
     update public.measure_status set status=v_result->>'status', system_check_run_id=v_run_id where nr=v_result->>'nr';
   end loop;
-  return v_evaluation || pg_catalog.jsonb_build_object('runId',v_run_id);
+  return (v_evaluation - 'financialStatements') || pg_catalog.jsonb_build_object('runId',v_run_id);
 end;
 $$;
 
