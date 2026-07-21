@@ -74,6 +74,10 @@ begin
     raise exception 'ZUWEISUNG_FEHLT';
   end if;
 
+  if assignment_row.bearbeiter_rolle in ('system_kai', 'system_kira') then
+    raise exception 'SYSTEM_STATUS_NUR_AUTOMATIK';
+  end if;
+
   actor_is_admin := private.is_people_admin();
   actor_is_bearer := coalesce(assignment_row.bearbeiter_person = actor_id, false)
     or (assignment_row.bearbeiter_person is null

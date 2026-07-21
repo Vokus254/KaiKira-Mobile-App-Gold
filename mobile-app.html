@@ -61,7 +61,7 @@
       pointer-events: auto;
     }
 
-    .login, .password-setup, .welcome, .questions, .role-editor, .assignment-admin {
+    .login, .password-setup, .welcome, .questions, .role-editor, .assignment-admin, .system-check {
       min-height: 100%;
       padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
       display: flex;
@@ -198,7 +198,8 @@
     .app.is-authenticated .password-setup,
     .app.is-authenticated .questions,
     .app.is-authenticated .role-editor,
-    .app.is-authenticated .assignment-admin { padding-top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
+    .app.is-authenticated .assignment-admin,
+    .app.is-authenticated .system-check { padding-top: max(84px, calc(env(safe-area-inset-top) + 72px)); }
 
     .overview {
       height: 100%;
@@ -365,6 +366,40 @@
     .assignment-result { min-height: 17px; margin: 0; color: var(--muted); font-size: 11px; }
     .assignment-result.is-success { color: var(--green); }
     .assignment-result.is-error { color: #ffd5d1; }
+    .system-check { display: block; overflow-y: auto; }
+    .system-check-head { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; margin-bottom: 20px; }
+    .system-check h2 { margin: 5px 0 7px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 10vw, 48px); font-weight: 500; line-height: 1; letter-spacing: -.04em; }
+    .system-check-copy { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.48; }
+    .system-panel { margin-bottom: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.025); }
+    .system-panel[hidden] { display: none; }
+    .system-panel h3 { margin: 0 0 10px; font-size: 15px; }
+    .system-upload { display: grid; gap: 10px; }
+    .system-file { width: 100%; padding: 11px; border: 1px dashed rgba(215,183,104,.38); border-radius: 12px; background: var(--gold-soft); color: var(--text); font-size: 12px; }
+    .system-paste { min-height: 105px; margin: 0; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
+    .system-upload-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .system-source { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+    .system-check-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .system-check-item { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; padding: 9px; border-radius: 11px; background: rgba(255,255,255,.025); }
+    .system-check-icon { font-weight: 900; text-align: center; }
+    .system-check-item.is-ok .system-check-icon { color: var(--green); }
+    .system-check-item.is-bad .system-check-icon { color: var(--red); }
+    .system-check-label { display: block; font-size: 12px; font-weight: 800; }
+    .system-check-detail { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .system-preview { display: grid; gap: 9px; }
+    .system-result-card { padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: #111319; }
+    .system-result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .system-result-title { font-size: 13px; font-weight: 850; }
+    .system-result-transition { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+    .system-result-proof { margin: 7px 0 0; color: #c9cbd1; font-size: 10px; line-height: 1.45; }
+    .system-fixed-note { margin: 8px 0 0; padding: 8px 9px; border-left: 2px solid var(--gold); background: var(--gold-soft); color: #ddd5b4; font-size: 10px; line-height: 1.42; }
+    .system-warning { display: none; margin: 10px 0 0; padding: 11px; border: 1px solid rgba(242,166,90,.38); border-radius: 12px; background: rgba(242,166,90,.1); color: #ffd19b; font-size: 11px; line-height: 1.45; }
+    .system-confirm { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; margin-top: 13px; color: #d7d8dc; font-size: 11px; line-height: 1.45; }
+    .system-confirm input { width: 17px; height: 17px; accent-color: var(--gold); }
+    .system-apply { width: 100%; margin-top: 12px; }
+    .system-apply:disabled { cursor: not-allowed; opacity: .45; }
+    .system-apply-status { min-height: 20px; margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .system-apply-status.is-success { color: var(--green); }
+    .system-apply-status.is-error { color: #ffd5d1; }
 
     .questions { justify-content: center; }
     .questions-inner { width: 100%; }
@@ -478,6 +513,7 @@
               <h2 id="overview-title">10 Prozessschritte</h2>
             </div>
             <div class="head-actions">
+              <button class="admin-launch" id="system-check-button" type="button" hidden>System-Check</button>
               <button class="admin-launch" id="assignment-admin-button" type="button" hidden>Maßnahmen zuweisen</button>
               <button class="back" type="button" data-go="welcome" aria-label="Zurück zur Begrüßung">←</button>
             </div>
@@ -557,6 +593,44 @@
       <p class="error" id="assignment-error" role="alert"></p>
     </section>
 
+    <section class="view system-check" id="system-check" aria-labelledby="system-check-title">
+      <div class="system-check-head">
+        <button class="back" type="button" data-system-return-overview aria-label="Zurück zur Prozessübersicht">←</button>
+        <div>
+          <p class="eyebrow">Adminbereich</p>
+          <h2 id="system-check-title">System-Check</h2>
+          <p class="system-check-copy">Core-JSON lokal prüfen und die technischen Status von 2.6, 6.1 und 6.2 erst nach Deiner Bestätigung zentral übernehmen.</p>
+        </div>
+      </div>
+      <section class="system-panel" aria-labelledby="system-source-title">
+        <h3 id="system-source-title">1. Core-JSON auswählen</h3>
+        <div class="system-upload">
+          <input class="system-file" id="system-json-file" type="file" accept="application/json,.json">
+          <textarea class="system-paste" id="system-json-paste" placeholder="Alternativ vollständiges kaikira-project-state-JSON hier einfügen"></textarea>
+          <div class="system-upload-actions">
+            <button class="button button-primary" id="system-check-paste" type="button">Eingefügtes JSON prüfen</button>
+            <button class="button" id="system-check-clear" type="button">Zurücksetzen</button>
+          </div>
+        </div>
+        <p class="system-source" id="system-source-info">Das vollständige JSON bleibt im Browser und wird nicht dauerhaft gespeichert.</p>
+      </section>
+      <section class="system-panel" id="system-input-panel" aria-labelledby="system-input-title" hidden>
+        <h3 id="system-input-title">2. Acht Eingangskontrollen</h3>
+        <ol class="system-check-list" id="system-input-checks"></ol>
+      </section>
+      <section class="system-panel" id="system-preview-panel" aria-labelledby="system-preview-title" hidden>
+        <h3 id="system-preview-title">3. Vorschau vor Speicherung</h3>
+        <div class="system-preview" id="system-preview"></div>
+        <p class="system-warning" id="system-downgrade-warning">Achtung: Mindestens eine Maßnahme würde von „erledigt“ auf „offen“ oder „nicht prüfbar“ zurückgestuft. Es wird nichts automatisch gespeichert.</p>
+        <label class="system-confirm"><input id="system-confirm" type="checkbox"> Ich habe Eingangskontrollen, Nachweise und mögliche Rückstufungen geprüft.</label>
+        <div class="system-upload-actions">
+          <button class="button button-primary" id="system-apply" type="button" disabled>Ergebnisse übernehmen</button>
+          <button class="button" id="system-cancel" type="button">Abbrechen</button>
+        </div>
+        <p class="system-apply-status" id="system-apply-status" role="status" aria-live="polite"></p>
+      </section>
+    </section>
+
     <dialog class="return-dialog" id="return-dialog" aria-labelledby="return-dialog-title">
       <form class="return-dialog-inner" id="return-form" method="dialog">
         <h2 id="return-dialog-title">Maßnahme zurückgeben</h2>
@@ -605,6 +679,13 @@
         "itAdministrator", "externerDienstleister"
       ];
       const assignmentBearerRoles = [...assignmentHumanRoles, "system_kai", "system_kira"];
+      const systemMeasureNumbers = new Set([
+        "5.1", "5.2", "5.6", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7", "6.8",
+        "2.6", "2.7", "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "5.7", "5.8",
+        "6.9", "6.10", "6.11", "6.13", "6.13A", "6.14", "6.14A", "6.15", "7.4", "7.5", "7.6", "7.7"
+      ]);
+      const automatedMeasureNumbers = new Set(["2.6", "6.1", "6.2"]);
+      const systemMeasureNote = "Automatisch aus dem Core-JSON abgeleitet. 'Erledigt' bedeutet ausschließlich technisch erzeugt und abgestimmt – keine fachliche Prüfung oder Freigabe.";
       let supabaseClient;
       let currentPerson = null;
       let activeSession = null;
@@ -794,7 +875,8 @@
         in_bearbeitung: "in Bearbeitung",
         zur_freigabe: "zur Freigabe",
         erledigt: "erledigt",
-        freigegeben: "freigegeben"
+        freigegeben: "freigegeben",
+        nicht_pruefbar: "nicht prüfbar"
       };
       const measureStatusClass = status => {
         if (isCompletedStatus(status)) return "measure-status-done";
@@ -802,6 +884,9 @@
         if (status === "zur_freigabe") return "measure-status-review";
         return "measure-status-open";
       };
+      const displayedMeasureStatus = (number, status) => automatedMeasureNumbers.has(number)
+        ? status === "erledigt" ? "technisch erledigt" : status === "offen" ? "technisch offen" : measureStatusLabels[status] || status
+        : measureStatusLabels[status] || status;
       const roleMeasure = (number, title) => `<li class="measure-item measure-item-editable">
         <button class="measure-edit-button" type="button" data-edit-roles>
           <span class="measure-number">${number}</span>
@@ -820,6 +905,7 @@
               <span class="measure-status ${measureStatusClass(status)}" data-measure-status>${measureStatusLabels[status]}</span>
             </div>
             <p class="measure-assignment" data-measure-assignment>Zuweisung wird geladen …</p>
+            ${automatedMeasureNumbers.has(number) ? `<p class="system-fixed-note">${systemMeasureNote}</p>` : ""}
             <div class="measure-flow" data-measure-flow aria-label="Statusverlauf"></div>
             <div class="measure-actions" data-measure-actions></div>
           </div>
@@ -891,7 +977,7 @@
           const status = measureStatus(number);
           const assignment = measureAssignments.get(number);
           const statusBadge = row.querySelector("[data-measure-status]");
-          statusBadge.textContent = measureStatusLabels[status] || status;
+          statusBadge.textContent = displayedMeasureStatus(number, status);
           statusBadge.className = `measure-status ${measureStatusClass(status)}`;
 
           const assignmentText = row.querySelector("[data-measure-assignment]");
@@ -915,18 +1001,22 @@
             assignmentText.textContent = "Keine Zuweisung hinterlegt";
           }
 
+          const isSystemMeasure = systemMeasureNumbers.has(number)
+            || Boolean(assignment?.bearbeiter_rolle?.startsWith("system_"));
           const hasApproval = Boolean(assignment?.freigeber_rolle);
           const stages = hasApproval
             ? ["offen", "in_bearbeitung", "zur_freigabe", "freigegeben"]
             : ["offen", "erledigt"];
           const currentStage = Math.max(0, stages.indexOf(status));
           const flow = row.querySelector("[data-measure-flow]");
-          flow.innerHTML = stages.map((stage, index) => {
+          flow.innerHTML = isSystemMeasure ? "" : stages.map((stage, index) => {
             const reached = index <= currentStage ? " is-reached" : "";
             const complete = isCompletedStatus(status) && index <= currentStage ? " is-complete" : "";
             return `<span class="measure-flow-step${reached}${complete}" title="${measureStatusLabels[stage]}"></span>`;
           }).join("");
-          flow.setAttribute("aria-label", `${stages.length}-stufiger Ablauf, aktuell ${measureStatusLabels[status] || status}`);
+          flow.setAttribute("aria-label", isSystemMeasure
+            ? "Systemmaßnahme ohne manuelle Statusbedienung"
+            : `${stages.length}-stufiger Ablauf, aktuell ${measureStatusLabels[status] || status}`);
 
           const actions = [];
           const isAdmin = currentPerson?.role === "adminRechteverwaltung";
@@ -938,17 +1028,17 @@
             assignment.freigeber_person === currentPerson.id ||
             (!assignment.freigeber_person && assignment.freigeber_rolle === currentPerson.role)
           ));
-          if (!hasApproval && status === "offen" && (isBearer || isAdmin)) {
+          if (!isSystemMeasure && !hasApproval && status === "offen" && (isBearer || isAdmin)) {
             actions.push(["erledigt", "Als erledigt markieren", true]);
-          } else if (hasApproval && status === "offen" && (isBearer || isAdmin)) {
+          } else if (!isSystemMeasure && hasApproval && status === "offen" && (isBearer || isAdmin)) {
             actions.push(["in_bearbeitung", "Bearbeitung starten", true]);
-          } else if (hasApproval && status === "in_bearbeitung" && (isBearer || isAdmin)) {
+          } else if (!isSystemMeasure && hasApproval && status === "in_bearbeitung" && (isBearer || isAdmin)) {
             actions.push(["zur_freigabe", "Zur Freigabe einreichen", true]);
-          } else if (hasApproval && status === "zur_freigabe" && (isApprover || isAdmin)) {
+          } else if (!isSystemMeasure && hasApproval && status === "zur_freigabe" && (isApprover || isAdmin)) {
             if (!isBearer) actions.push(["freigegeben", "Freigeben", true]);
             actions.push(["in_bearbeitung", "Mit Kommentar zurückgeben", false, true]);
           }
-          if (isAdmin && isCompletedStatus(status)) {
+          if (!isSystemMeasure && isAdmin && isCompletedStatus(status)) {
             actions.push(["offen", "Wiedereröffnen", false]);
           }
           row.querySelector("[data-measure-actions]").innerHTML = actions.map(([next, label, primary, needsComment]) =>
@@ -1026,6 +1116,215 @@
         statusResult.data.forEach(row => measureStatuses.set(row.nr, row.status));
         assignmentResult.data.forEach(row => measureAssignments.set(row.nr, row));
         refreshMeasureStatuses();
+      };
+
+      const SYSTEM_TOLERANCE = 0.01;
+      const normalizeTarget = value => String(value ?? "").trim().toUpperCase().replace(/\s+/g, "_");
+      const finiteNumber = value => typeof value === "number" && Number.isFinite(value);
+      const closeEnough = (left, right) => finiteNumber(left) && finiteNumber(right)
+        && Math.abs(left - right) <= SYSTEM_TOLERANCE;
+      const euro = value => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
+
+      const evaluateSystemJson = payload => {
+        const core = payload?.core || {};
+        const susa = Array.isArray(core.susa) ? core.susa : [];
+        const mapping = Array.isArray(core.mapping) ? core.mapping : [];
+        const structure = Array.isArray(core.structure) ? core.structure : [];
+        const snapshot = payload?.financialSnapshot?.targetAggregates;
+        const checks = [];
+        const addCheck = (label, ok, detail) => checks.push({ label, ok: Boolean(ok), detail });
+
+        addCheck("Format und Version", payload?.format === "kaikira-project-state" && payload?.version === 4,
+          `${payload?.format || "fehlt"}, Version ${payload?.version ?? "fehlt"}`);
+        addCheck("Core-Listen vorhanden", susa.length > 0 && mapping.length > 0 && structure.length > 0,
+          `${susa.length} SuSa-, ${mapping.length} Mapping-, ${structure.length} Strukturzeilen`);
+
+        const susaAccounts = susa.map(row => String(row?.konto ?? "").trim());
+        const mappingAccounts = mapping.map(row => String(row?.konto ?? "").trim());
+        const susaAccountSet = new Set(susaAccounts);
+        const mappingAccountSet = new Set(mappingAccounts);
+        const uniqueSusa = susaAccounts.length > 0 && susaAccounts.every(Boolean) && susaAccountSet.size === susaAccounts.length;
+        addCheck("SuSa-Konten eindeutig", uniqueSusa,
+          uniqueSusa ? `${susaAccounts.length} eindeutige Konten` : "Leere oder doppelte Kontonummer gefunden");
+
+        const missingMappings = [...susaAccountSet].filter(account => !mappingAccountSet.has(account));
+        const extraMappings = [...mappingAccountSet].filter(account => !susaAccountSet.has(account));
+        const mappingOneToOne = mappingAccounts.length === susaAccounts.length
+          && mappingAccountSet.size === mappingAccounts.length && !missingMappings.length && !extraMappings.length;
+        addCheck("SuSa und Mapping 1:1", mappingOneToOne,
+          mappingOneToOne ? `${susaAccounts.length} Konten vollständig zugeordnet` : `${missingMappings.length} fehlen, ${extraMappings.length} zusätzlich oder doppelt`);
+
+        const targetsPresent = mapping.length > 0 && mapping.every(row => normalizeTarget(row?.ziel));
+        addCheck("Mapping-Ziele befüllt", targetsPresent,
+          targetsPresent ? "Kein leeres Ziel" : `${mapping.filter(row => !normalizeTarget(row?.ziel)).length} leere Ziele`);
+
+        const structureTargets = new Set(structure.map(row => normalizeTarget(row?.ziel)).filter(Boolean));
+        const unknownTargets = [...new Set(mapping.map(row => normalizeTarget(row?.ziel)).filter(Boolean))]
+          .filter(target => !structureTargets.has(target));
+        addCheck("Mapping-Ziele in Struktur", structureTargets.size > 0 && unknownTargets.length === 0,
+          unknownTargets.length ? `Unbekannt: ${unknownTargets.join(", ")}` : `${structureTargets.size} Strukturziele abgedeckt`);
+
+        const susaByAccount = new Map(susa.map(row => [String(row?.konto ?? "").trim(), row]));
+        const aggregates = {};
+        let numericRowsOk = true;
+        mapping.forEach(row => {
+          const source = susaByAccount.get(String(row?.konto ?? "").trim());
+          const target = normalizeTarget(row?.ziel);
+          if (!source || !target || !finiteNumber(source.bj) || !finiteNumber(source.vj)) {
+            numericRowsOk = false;
+            return;
+          }
+          aggregates[target] ||= { bj: 0, vj: 0, count: 0 };
+          aggregates[target].bj += source.bj;
+          aggregates[target].vj += source.vj;
+          aggregates[target].count += 1;
+        });
+        const snapshotIsObject = snapshot && typeof snapshot === "object" && !Array.isArray(snapshot);
+        const normalizedSnapshot = snapshotIsObject
+          ? Object.fromEntries(Object.entries(snapshot).map(([target, value]) => [normalizeTarget(target), value]))
+          : {};
+        const aggregateKeys = Object.keys(aggregates).sort();
+        const snapshotKeys = Object.keys(normalizedSnapshot).sort();
+        const snapshotMatches = numericRowsOk && snapshotIsObject
+          && aggregateKeys.length === snapshotKeys.length
+          && aggregateKeys.every((target, index) => target === snapshotKeys[index]
+            && closeEnough(aggregates[target].bj, normalizedSnapshot[target]?.bj)
+            && closeEnough(aggregates[target].vj, normalizedSnapshot[target]?.vj)
+            && aggregates[target].count === normalizedSnapshot[target]?.count);
+        addCheck("Zielaggregate stimmen mit Snapshot", snapshotMatches,
+          snapshotMatches ? `${aggregateKeys.length} Ziele bei 0,01 € Toleranz identisch` : "Neuberechnung und financialSnapshot.targetAggregates weichen ab");
+
+        const aggregateCount = Object.values(aggregates).reduce((sum, row) => sum + row.count, 0);
+        const countsMatch = numericRowsOk && aggregateCount === susa.length;
+        addCheck("Aggregat-Zeilen vollständig", countsMatch,
+          `${aggregateCount} aggregierte von ${susa.length} SuSa-Zeilen`);
+
+        const inputOk = checks.length === 8 && checks.every(check => check.ok);
+        const result = (nr, status, proof, details) => ({ nr, status, proof, details });
+        if (!inputOk) {
+          const proof = "Mindestens eine der acht Eingangskontrollen ist fehlgeschlagen; eine technische Bewertung ist nicht möglich.";
+          return { inputOk, checks, sourceMetrics: { susaRows: susa.length, mappingRows: mapping.length, structureRows: structure.length }, results: [
+            result("2.6", "nicht_pruefbar", proof, {}), result("6.1", "nicht_pruefbar", proof, {}), result("6.2", "nicht_pruefbar", proof, {})
+          ] };
+        }
+
+        const targetsFor = marker => new Set(structure
+          .filter(row => Array.isArray(row?.levels) && row.levels.some(level => String(level).includes(marker)))
+          .map(row => normalizeTarget(row.ziel)).filter(Boolean));
+        const assetTargets = targetsFor("Aktiva");
+        const liabilityTargets = targetsFor("Passiva");
+        const incomeTargets = targetsFor("GuV");
+        const sumTargets = (targets, year) => [...targets].reduce((sum, target) => sum + (aggregates[target]?.[year] || 0), 0);
+        const assetsBJ = sumTargets(assetTargets, "bj");
+        const assetsVJ = sumTargets(assetTargets, "vj");
+        const liabilitiesBJ = sumTargets(liabilityTargets, "bj");
+        const liabilitiesVJ = sumTargets(liabilityTargets, "vj");
+        const guvBJ = sumTargets(incomeTargets, "bj");
+        const guvVJ = sumTargets(incomeTargets, "vj");
+        const annualBJ = -guvBJ;
+        const annualVJ = -guvVJ;
+        const identityBJ = closeEnough(assetsBJ + liabilitiesBJ, annualBJ);
+        const identityVJ = closeEnough(assetsVJ + liabilitiesVJ, annualVJ);
+        const metrics = payload?.integrityCheck?.metrics || {};
+        const deviations = Array.isArray(payload?.integrityCheck?.deviations) ? payload.integrityCheck.deviations : [];
+        const noDeviations = deviations.length === 0 && Number(payload?.integrityCheck?.totalDeviations || 0) === 0;
+        const aggregate = target => aggregates[target] || { bj: 0, vj: 0, count: 0 };
+        const revenueBJ = Math.abs(aggregate("G_UE").bj);
+        const revenueVJ = Math.abs(aggregate("G_UE").vj);
+        const inventoryBJ = -aggregate("G_BEST").bj;
+        const ownBJ = -aggregate("G_AEL").bj;
+        const otherIncomeBJ = Math.abs(aggregate("G_SBE").bj);
+        const materialBJ = Math.abs(aggregate("G_MAT_A").bj) + Math.abs(aggregate("G_MAT_B").bj);
+        const personnelBJ = Math.abs(aggregate("G_PA_A").bj) + Math.abs(aggregate("G_PA_B").bj);
+        const depreciationBJ = Math.abs(aggregate("G_AFA").bj);
+        const otherExpenseBJ = Math.abs(aggregate("G_SBA").bj);
+        const interestIncomeBJ = Math.abs(aggregate("G_ZE").bj);
+        const interestExpenseBJ = Math.abs(aggregate("G_ZA").bj);
+        const incomeTaxBJ = Math.abs(aggregate("G_ST").bj);
+        const otherTaxesBJ = Math.abs(aggregate("G_SST").bj);
+        const operatingResultBJ = revenueBJ + inventoryBJ + ownBJ + otherIncomeBJ - materialBJ - personnelBJ - depreciationBJ - otherExpenseBJ;
+        const ebtBJ = operatingResultBJ + interestIncomeBJ - interestExpenseBJ;
+        const afterTaxBJ = ebtBJ - incomeTaxBJ;
+        const formulaAnnualBJ = afterTaxBJ - otherTaxesBJ;
+        const balanceTargetsComplete = [...assetTargets, ...liabilityTargets].every(target => aggregates[target]);
+        const incomeTargetsComplete = [...incomeTargets].every(target => aggregates[target]);
+        const check26 = identityBJ && identityVJ;
+        const check61 = balanceTargetsComplete && check26 && noDeviations
+          && closeEnough(metrics.balanceBJ, assetsBJ) && closeEnough(metrics.balanceVJ, assetsVJ);
+        const check62 = incomeTargetsComplete && noDeviations && closeEnough(formulaAnnualBJ, annualBJ)
+          && closeEnough(metrics.revenueBJ, revenueBJ) && closeEnough(metrics.revenueVJ, revenueVJ)
+          && closeEnough(metrics.ebtBJ, ebtBJ) && closeEnough(metrics.afterTaxBJ, afterTaxBJ);
+
+        return { inputOk, checks, sourceMetrics: { susaRows: susa.length, mappingRows: mapping.length, structureRows: structure.length }, results: [
+          result("2.6", check26 ? "erledigt" : "offen", `Aktiva ${euro(assetsBJ)} / ${euro(assetsVJ)}; Passiva roh ${euro(liabilitiesBJ)} / ${euro(liabilitiesVJ)}; Jahresüberschuss ${euro(annualBJ)} / ${euro(annualVJ)}; Differenz jeweils ≤ 0,01 €.`, { assetsBJ, assetsVJ, liabilitiesBJ, liabilitiesVJ, annualBJ, annualVJ }),
+          result("6.1", check61 ? "erledigt" : "offen", `Bilanzsumme BJ ${euro(assetsBJ)}, VJ ${euro(assetsVJ)}; alle Bilanzziele aggregiert und mit integrityCheck abgestimmt.`, { balanceBJ: assetsBJ, balanceVJ: assetsVJ, balanceTargets: assetTargets.size + liabilityTargets.size }),
+          result("6.2", check62 ? "erledigt" : "offen", `Umsatzerlöse BJ ${euro(revenueBJ)}, VJ ${euro(revenueVJ)}; EBT BJ ${euro(ebtBJ)}; Ergebnis nach Steuern BJ ${euro(afterTaxBJ)}; Jahresüberschuss BJ ${euro(annualBJ)}.`, { revenueBJ, revenueVJ, ebtBJ, afterTaxBJ, annualBJ })
+        ] };
+      };
+
+      const sha256 = async textValue => {
+        const bytes = new TextEncoder().encode(textValue);
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+      };
+      let pendingSystemCheck = null;
+
+      const renderSystemPreview = (payload, evaluation, hash, sourceName) => {
+        pendingSystemCheck = { payload, evaluation, hash, sourceName };
+        document.getElementById("system-input-panel").hidden = false;
+        document.getElementById("system-preview-panel").hidden = false;
+        document.getElementById("system-input-checks").innerHTML = evaluation.checks.map((check, index) => `
+          <li class="system-check-item ${check.ok ? "is-ok" : "is-bad"}">
+            <span class="system-check-icon">${check.ok ? "✓" : "×"}</span>
+            <span><span class="system-check-label">${index + 1}. ${escapeHtml(check.label)}</span><span class="system-check-detail">${escapeHtml(check.detail)}</span></span>
+          </li>`).join("");
+        const completed = status => isCompletedStatus(status);
+        let hasDowngrade = false;
+        document.getElementById("system-preview").innerHTML = evaluation.results.map(item => {
+          const previous = measureStatus(item.nr);
+          if (completed(previous) && !completed(item.status)) hasDowngrade = true;
+          return `<article class="system-result-card">
+            <div class="system-result-head"><span class="system-result-title">Maßnahme ${item.nr}</span><span class="measure-status ${measureStatusClass(item.status)}">${escapeHtml(displayedMeasureStatus(item.nr, item.status))}</span></div>
+            <p class="system-result-transition">Bisher: ${escapeHtml(displayedMeasureStatus(item.nr, previous))} → vorgeschlagen: ${escapeHtml(displayedMeasureStatus(item.nr, item.status))}</p>
+            <p class="system-result-proof">${escapeHtml(item.proof)}</p>
+            <p class="system-fixed-note">${systemMeasureNote}</p>
+          </article>`;
+        }).join("");
+        document.getElementById("system-downgrade-warning").style.display = hasDowngrade ? "block" : "none";
+        document.getElementById("system-source-info").textContent = `${sourceName} · Export ${payload.exportedAt || "ohne Zeitstempel"} · SHA-256 ${hash}`;
+        document.getElementById("system-confirm").checked = false;
+        document.getElementById("system-apply").disabled = true;
+        document.getElementById("system-apply-status").textContent = evaluation.inputOk
+          ? "Noch nichts gespeichert. Bitte Vorschau prüfen und aktiv bestätigen."
+          : "Nicht prüfbar: Noch nichts gespeichert. Eine bestätigte Übernahme dokumentiert diesen Zustand nachvollziehbar.";
+      };
+
+      const inspectSystemJson = async (rawText, sourceName) => {
+        const status = document.getElementById("system-apply-status");
+        try {
+          const payload = JSON.parse(rawText);
+          const [evaluation, hash] = [evaluateSystemJson(payload), await sha256(rawText)];
+          renderSystemPreview(payload, evaluation, hash, sourceName);
+        } catch (error) {
+          console.error(error);
+          pendingSystemCheck = null;
+          document.getElementById("system-input-panel").hidden = true;
+          document.getElementById("system-preview-panel").hidden = false;
+          document.getElementById("system-preview").innerHTML = "";
+          document.getElementById("system-confirm").checked = false;
+          document.getElementById("system-apply").disabled = true;
+          status.className = "system-apply-status is-error";
+          status.textContent = "Die Eingabe ist kein gültiges JSON und kann nicht geprüft werden.";
+        }
+      };
+
+      const resetSystemCheck = () => {
+        pendingSystemCheck = null;
+        document.getElementById("system-json-file").value = "";
+        document.getElementById("system-json-paste").value = "";
+        document.getElementById("system-input-panel").hidden = true;
+        document.getElementById("system-preview-panel").hidden = true;
+        document.getElementById("system-source-info").textContent = "Das vollständige JSON bleibt im Browser und wird nicht dauerhaft gespeichert.";
       };
 
       const escapeHtml = value => String(value ?? "")
@@ -1210,6 +1509,7 @@
         if (id === "overview") document.querySelector(".overview").scrollTop = 0;
         if (id === "role-editor") document.getElementById("role-editor").scrollTop = 0;
         if (id === "assignment-admin") document.getElementById("assignment-admin").scrollTop = 0;
+        if (id === "system-check") document.getElementById("system-check").scrollTop = 0;
       };
 
       const fillRoleForm = () => {
@@ -1237,7 +1537,51 @@
         if (loaded) showView("assignment-admin");
       });
 
+      document.getElementById("system-check-button").addEventListener("click", () => {
+        if (currentPerson?.role === "adminRechteverwaltung") showView("system-check");
+      });
+
       document.querySelector("[data-return-overview]").addEventListener("click", () => showView("overview"));
+      document.querySelector("[data-system-return-overview]").addEventListener("click", () => showView("overview"));
+
+      document.getElementById("system-json-file").addEventListener("change", async event => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        await inspectSystemJson(await file.text(), file.name);
+      });
+      document.getElementById("system-check-paste").addEventListener("click", async () => {
+        const rawText = document.getElementById("system-json-paste").value.trim();
+        if (rawText) await inspectSystemJson(rawText, "Eingefügtes JSON");
+      });
+      document.getElementById("system-check-clear").addEventListener("click", resetSystemCheck);
+      document.getElementById("system-cancel").addEventListener("click", resetSystemCheck);
+      document.getElementById("system-confirm").addEventListener("change", event => {
+        document.getElementById("system-apply").disabled = !event.target.checked || !pendingSystemCheck;
+      });
+      document.getElementById("system-apply").addEventListener("click", async event => {
+        if (!pendingSystemCheck || currentPerson?.role !== "adminRechteverwaltung") return;
+        const button = event.currentTarget;
+        const status = document.getElementById("system-apply-status");
+        button.disabled = true;
+        status.className = "system-apply-status";
+        status.textContent = "Server prüft das JSON erneut und speichert die drei Ergebnisse atomar …";
+        const { data, error } = await supabaseClient.rpc("apply_system_check", {
+          p_payload: pendingSystemCheck.payload,
+          p_file_sha256: pendingSystemCheck.hash
+        });
+        if (error) {
+          console.error(error);
+          status.className = "system-apply-status is-error";
+          status.textContent = "Der System-Check konnte nicht übernommen werden. Es wurde kein Teilergebnis gespeichert.";
+          button.disabled = false;
+          return;
+        }
+        const serverResults = Array.isArray(data?.results) ? data.results : [];
+        serverResults.forEach(item => measureStatuses.set(item.nr, item.status));
+        refreshMeasureStatuses();
+        status.className = "system-apply-status is-success";
+        status.textContent = `System-Check ${data?.runId ?? ""} vollständig gespeichert. Das JSON selbst wurde nicht dauerhaft abgelegt.`;
+      });
 
       document.getElementById("assignment-steps").addEventListener("change", event => {
         const form = event.target.closest("[data-assignment-form]");
@@ -1379,6 +1723,7 @@
         currentPerson = person;
         app.classList.add("is-authenticated");
         document.getElementById("assignment-admin-button").hidden = person.role !== "adminRechteverwaltung";
+        document.getElementById("system-check-button").hidden = person.role !== "adminRechteverwaltung";
         document.getElementById("session-name").textContent = person.name;
         document.getElementById("session-role").textContent = peopleRoleLabels[person.role] || person.role;
         document.getElementById("welcome-person-name").textContent = person.name.trim().split(/\s+/)[0] || person.name;
